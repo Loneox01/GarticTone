@@ -1,0 +1,58 @@
+* {
+    box-sizing: border-box;
+}
+
+.keyboard {
+    display: flex;
+
+    /* keyboard positioning */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+
+    /* height -> 25 %*/
+    height: 25vh;
+
+    /* bg color of the keyboard, should be mostly colored over */
+    background-color: #111;
+    overflow: hidden;
+
+    /* this the border shenan I'm talking bout in discord */
+    border: 2px solid #5c1010;
+    padding-top: 1px;
+}
+
+.white_key {
+    /* unit relative to other keys */
+    flex: 1;
+
+    /* height relative to parent */
+    height: 100%;
+    background-color: white;
+
+    /* top/bottom border conflicts with maroon keyboard border */
+
+    border-left: 1px solid #ccc;
+    border-right: 1px solid #ccc;
+
+
+    /* rounded edges -> all 0s means perfect rectangle */
+    border-radius: 0 0 0 0;
+    z-index: 1;
+}
+
+.black_key {
+    /* fixed 4% width */
+    width: 4%;
+    height: 60%;
+    background-color: #000;
+
+    /* puts left edge 2% from edge of white key, moves right edge to where white keys collide*/
+    margin-left: -2%;
+    margin-right: -2%;
+
+    /* bottom corners get a little curve */
+    border-radius: 0 0 5px 5px;
+    z-index: 2;
+}
