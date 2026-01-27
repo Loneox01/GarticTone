@@ -54,6 +54,31 @@
     transition: transform 0.05s, background-color 0.1s;
 }
 
+.white_key span {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+
+    color: #323232e0;
+
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+
+    /* event fade in attributes */
+    opacity: 0;
+    transition: opacity 0.2s ease;
+
+    /* avoid events */
+    pointer-events: none;
+    user-select: none;
+}
+
+.white_key.hovered span,
+.white_key.pressed span {
+    opacity: 1;
+}
+
 .black_key_wrapper {
     /* fixed 4% width */
     width: 4%;
