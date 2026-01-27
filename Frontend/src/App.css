@@ -56,3 +56,11 @@
     border-radius: 0 0 5px 5px;
     z-index: 2;
 }
+
+.white_key.pressed {
+    background-color: #22b4e4;
+}
+
+.black_key.pressed {
+    background-color: #22b4e4;
+}
