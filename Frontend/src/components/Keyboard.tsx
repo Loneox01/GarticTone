@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 interface Key {
     note: string;
@@ -20,6 +20,37 @@ const OCTAVE: Key[] = [
     { note: "B", type: "white" },
 ];
 
+// Sound dict
+const SEMITONE_MAP: Record<string, number> = {
+    C: 0,
+    "C#": 1,
+    D: 2,
+    "D#": 3,
+    E: 4,
+    F: 5,
+    "F#": 6,
+    G: 7,
+    "G#": 8,
+    A: 9,
+    "A#": 10,
+    B: 11,
+};
+
+// Convert key to frequency
+function keyIdToFrequency(id: string): number {
+    const match = id.match(/^([A-G]#?)(\d+)$/);
+    if (!match) return 440;
+
+    const [, note, uiOctStr] = match;
+    const uiOct = Number(uiOctStr);
+
+    // Map UI octaves 0–2 to musical octaves 3–5
+    const realOct = uiOct + 3;
+
+    const midi = 12 + realOct * 12 + SEMITONE_MAP[note]; // C0 = 12
+    return 440 * Math.pow(2, (midi - 69) / 12);
+}
+
 const Keyboard = () => {
     const numOctaves = 3;
     const keyboard = Array.from({ length: numOctaves }, (_, octaveIndex) =>
@@ -32,6 +63,54 @@ const Keyboard = () => {
     // creates an array of keys, i.e. [ { note: 'C',  type: 'white', id: 'C0' }, ... ]
 
     const [pressedId, setPressedId] = useState<string | null>(null);
+
+    const audioCtxRef = useRef<AudioContext | null>(null);
+    const activeNotesRef = useRef<
+        Map<string, { osc: OscillatorNode; gain: GainNode }>
+    >(new Map());
+
+    async function startNote(keyId: string) {
+        audioCtxRef.current ??= new AudioContext();
+        const ctx = audioCtxRef.current;
+
+        await ctx.resume();
+
+        if (activeNotesRef.current.has(keyId)) return;
+
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        // Choose oscillation type;
+        osc.type = "sine";
+        // osc.type = "triangle";
+        // osc.type = "square";
+        osc.frequency.value = keyIdToFrequency(keyId);
+
+        const now = ctx.currentTime;
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(0.2, now + 0.01);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start();
+
+        activeNotesRef.current.set(keyId, { osc, gain });
+    }
+
+    function stopNote(keyId: string) {
+        const ctx = audioCtxRef.current;
+        const node = activeNotesRef.current.get(keyId);
+        if (!ctx || !node) return;
+
+        const now = ctx.currentTime;
+        node.gain.gain.cancelScheduledValues(now);
+        node.gain.gain.setValueAtTime(node.gain.gain.value, now);
+        node.gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
+
+        node.osc.stop(now + 0.06);
+        activeNotesRef.current.delete(keyId);
+    }
 
     return (
         <div className="keyboard">
@@ -46,11 +125,26 @@ const Keyboard = () => {
                     <div
                         key={key.id}
                         className={className}
-                        onMouseDown={() => setPressedId(key.id)}
-                        onMouseUp={() => setPressedId(null)}
-                        onMouseLeave={() => setPressedId(null)}
-                        onTouchStart={() => setPressedId(key.id)}
-                        onTouchEnd={() => setPressedId(null)}
+                        onMouseDown={() => {
+                            setPressedId(key.id);
+                            void startNote(key.id);
+                        }}
+                        onMouseUp={() => {
+                            setPressedId(null);
+                            stopNote(key.id);
+                        }}
+                        onMouseLeave={() => {
+                            setPressedId(null);
+                            stopNote(key.id);
+                        }}
+                        onTouchStart={() => {
+                            setPressedId(key.id);
+                            void startNote(key.id);
+                        }}
+                        onTouchEnd={() => {
+                            setPressedId(null);
+                            stopNote(key.id);
+                        }}
                     />
                 );
             })}
