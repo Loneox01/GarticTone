@@ -40,26 +40,34 @@ const Keyboard = () => {
                 const isPressed = pressedId === key.id;
                 const isHovered = hoveredId === key.id;
 
-                // selects built in CSS attribute className by conditional
-                const className =
+                // selects built in CSS attribute className by conditional, init as wrapper and key Class
+                const wrapperClass = key.type === "white" ? "white_key_wrapper" : "black_key_wrapper";
+                const keyClass =
                     (key.type === "white" ? "white_key" : "black_key") +
                     (isPressed ? " pressed" : "") +
                     (isHovered ? " hovered" : "");
 
                 return (
+                    /* wrapper div handles interactives and "hitboxes" */
                     <div
                         key={key.id}
-                        className={className}
+                        className={wrapperClass}
                         onMouseDown={() => setPressedId(key.id)}
                         onMouseUp={() => setPressedId(null)}
+                        onMouseEnter={() => setHoveredId(key.id)}
                         onMouseLeave={() => {
                             setPressedId(null);
                             setHoveredId(null);
                         }}
                         onTouchStart={() => setPressedId(key.id)}
                         onTouchEnd={() => setPressedId(null)}
-                        onMouseEnter={() => setHoveredId(key.id)}
-                    />
+                    >
+                        {/* key div handles visuals */}
+                        <div
+                            className={keyClass}>
+                            {key.type === "white" && <span>{key.note}</span>}
+                        </div>
+                    </div>
                 );
             })}
         </div>
