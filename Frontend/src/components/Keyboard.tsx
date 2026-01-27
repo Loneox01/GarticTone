@@ -32,15 +32,19 @@ const Keyboard = () => {
     // creates an array of keys, i.e. [ { note: 'C',  type: 'white', id: 'C0' }, ... ]
 
     const [pressedId, setPressedId] = useState<string | null>(null);
+    const [hoveredId, setHoveredId] = useState<string | null>(null);
 
     return (
         <div className="keyboard">
             {keyboard.map((key) => {
                 const isPressed = pressedId === key.id;
+                const isHovered = hoveredId === key.id;
+
                 // selects built in CSS attribute className by conditional
                 const className =
                     (key.type === "white" ? "white_key" : "black_key") +
-                    (isPressed ? " pressed" : "");
+                    (isPressed ? " pressed" : "") +
+                    (isHovered ? " hovered" : "");
 
                 return (
                     <div
@@ -48,9 +52,13 @@ const Keyboard = () => {
                         className={className}
                         onMouseDown={() => setPressedId(key.id)}
                         onMouseUp={() => setPressedId(null)}
-                        onMouseLeave={() => setPressedId(null)}
+                        onMouseLeave={() => {
+                            setPressedId(null);
+                            setHoveredId(null);
+                        }}
                         onTouchStart={() => setPressedId(key.id)}
                         onTouchEnd={() => setPressedId(null)}
+                        onMouseEnter={() => setHoveredId(key.id)}
                     />
                 );
             })}

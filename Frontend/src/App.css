@@ -57,10 +57,25 @@
     z-index: 2;
 }
 
+.black_key.hovered {
+    background-color: #11566eed;
+}
+
+.white_key.hovered {
+    background-color: #21a7d4f8;
+}
+
+/* IMPORTANT: keep .pressed below .hovered to give pressed priority in UI */
 .white_key.pressed {
     background-color: #22b4e4;
+    box-shadow: inset 2px 5px rgba(0, 0, 0, 0.2);
+    /* shift down */
+    transform: translateY(2px);
 }
 
 .black_key.pressed {
-    background-color: #22b4e4;
+    background-color: #187d9f;
+    box-shadow: inset 2px 5px rgba(0, 0, 0, 0.2);
+    /* shift down */
+    transform: translateY(1px);
 }
