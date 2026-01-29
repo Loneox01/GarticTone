@@ -63,6 +63,7 @@ const Keyboard = () => {
     // creates an array of keys, i.e. [ { note: 'C',  type: 'white', id: 'C0' }, ... ]
 
     const [pressedId, setPressedId] = useState<string | null>(null);
+    const [hoveredId, setHoveredId] = useState<string | null>(null);
 
     const audioCtxRef = useRef<AudioContext | null>(null);
     const activeNotesRef = useRef<
@@ -116,15 +117,23 @@ const Keyboard = () => {
         <div className="keyboard">
             {keyboard.map((key) => {
                 const isPressed = pressedId === key.id;
-                // selects built in CSS attribute className by conditional
-                const className =
+                const isHovered = hoveredId === key.id;
+
+                // selects built in CSS attribute className by conditional, init as wrapper and key Class
+                const wrapperClass =
+                    key.type === "white"
+                        ? "white_key_wrapper"
+                        : "black_key_wrapper";
+                const keyClass =
                     (key.type === "white" ? "white_key" : "black_key") +
-                    (isPressed ? " pressed" : "");
+                    (isPressed ? " pressed" : "") +
+                    (isHovered ? " hovered" : "");
 
                 return (
+                    /* wrapper div handles interactives and "hitboxes" */
                     <div
                         key={key.id}
-                        className={className}
+                        className={wrapperClass}
                         onMouseDown={() => {
                             setPressedId(key.id);
                             void startNote(key.id);
@@ -133,8 +142,12 @@ const Keyboard = () => {
                             setPressedId(null);
                             stopNote(key.id);
                         }}
+                        onMouseEnter={() => {
+                            setHoveredId(key.id);
+                        }}
                         onMouseLeave={() => {
                             setPressedId(null);
+                            setHoveredId(null);
                             stopNote(key.id);
                         }}
                         onTouchStart={() => {
@@ -145,7 +158,12 @@ const Keyboard = () => {
                             setPressedId(null);
                             stopNote(key.id);
                         }}
-                    />
+                    >
+                        {/* key div handles visuals */}
+                        <div className={keyClass}>
+                            {key.type === "white" && <span>{key.note}</span>}
+                        </div>
+                    </div>
                 );
             })}
         </div>

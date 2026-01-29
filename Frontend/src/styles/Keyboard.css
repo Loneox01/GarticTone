@@ -1,0 +1,130 @@
+* {
+    box-sizing: border-box;
+}
+
+.keyboard {
+    display: flex;
+
+    /* keyboard positioning */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+
+    /* height -> 25 %*/
+    height: 25vh;
+
+    /* bg color of the keyboard, should be mostly colored over */
+    background-color: #111;
+    overflow: hidden;
+
+    /* this the border shenan I'm talking bout in discord */
+    border: 2px solid #5c1010;
+    padding-top: 1px;
+}
+
+.white_key_wrapper {
+    /* unit relative to other keys */
+    flex: 1;
+
+    /* height relative to parent */
+    height: 100%;
+    position: relative;
+    display: flex;
+
+    z-index: 1;
+}
+
+.white_key {
+    /* visual ONLY */
+    width: 100%;
+    height: 100%;
+
+    background-color: white;
+
+    /* top/bottom border conflicts with maroon keyboard border */
+
+    border-left: 1px solid #ccc;
+    border-right: 1px solid #ccc;
+
+    /* rounded edges -> all 0s means perfect rectangle */
+    border-radius: 0 0 0 0;
+
+    /* click/hover transition times */
+    transition: transform 0.05s, background-color 0.1s;
+}
+
+.white_key span {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+
+    color: #323232e0;
+
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+
+    /* event fade in attributes */
+    opacity: 0;
+    transition: opacity 0.2s ease;
+
+    /* avoid events */
+    pointer-events: none;
+    user-select: none;
+}
+
+.white_key.hovered span,
+.white_key.pressed span {
+    opacity: 1;
+}
+
+.black_key_wrapper {
+    /* fixed 4% width */
+    width: 4%;
+    height: 60%;
+
+    /* puts left edge 2% from edge of white key, moves right edge to where white keys collide*/
+    margin-left: -2%;
+    margin-right: -2%;
+
+    z-index: 2;
+
+    position: relative;
+}
+
+.black_key {
+    /* visual ONLY */
+    width: 100%;
+    height: 100%;
+
+    background-color: #000;
+
+    /* bottom corners get a little curve */
+    border-radius: 0 0 5px 5px;
+
+    transition: transform 0.05s, background-color 0.1s;
+}
+
+.black_key.hovered {
+    background-color: #11576e;
+}
+
+.white_key.hovered {
+    background-color: #21a7d4;
+}
+
+/* IMPORTANT: keep .pressed below .hovered to give pressed priority in UI */
+.white_key.pressed {
+    background-color: #22b4e4;
+    box-shadow: inset 2px 5px rgba(0, 0, 0, 0.2);
+    /* shift down */
+    transform: translateY(2px);
+}
+
+.black_key.pressed {
+    background-color: #187d9f;
+    box-shadow: inset 2px 5px rgba(0, 0, 0, 0.2);
+    /* shift down */
+    transform: translateY(1px);
+}
