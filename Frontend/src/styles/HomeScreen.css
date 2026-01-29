@@ -1,0 +1,24 @@
+.home-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    padding: 20px;
+}
+
+.btn-start {
+    padding: 15px 30px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    transition: transform 0.1s, background-color 0.2s;
+}
+
+.btn-start:hover {
+    background-color: #45a049;
+    transform: scale(1.05);
+}

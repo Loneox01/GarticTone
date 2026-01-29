@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
-import Keyboard from './components/Keyboard'
-import { socket } from './services/socket';
 import './App.css'
-
+import { useState, useEffect } from 'react'
+import { socket } from './services/socket';
+import Home from './screens/HomeScreen';
+import Game from './screens/GameScreen';
 
 function App() {
 
@@ -31,32 +31,16 @@ function App() {
         setView('home');
     };
 
-    if (view === 'home') {
-        return (
-            <div style={styles.container}>
-                <button onClick={goToLobby} style={styles.button}>
-                    To Lobby
-                </button>
-            </div>
-        );
-    }
-
     return (
-        <div style={styles.container}>
-            <button onClick={goToHome} style={styles.backButton}>
-                ← Back to Home
-            </button>
-            <hr />
-            <Keyboard />
+        <div className="app-main">
+            {view === 'home' ? (
+                <Home onStart={goToLobby} />
+            ) : (
+                <Game onBack={goToHome} />
+            )}
         </div>
     );
 
 }
-
-const styles = {
-    container: { padding: '20px', textAlign: 'center' as const },
-    button: { padding: '10px 20px', fontSize: '1.2rem', cursor: 'pointer' },
-    backButton: { padding: '5px 10px', marginBottom: '10px' }
-};
 
 export default App
