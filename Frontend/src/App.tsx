@@ -7,34 +7,67 @@ import Game from './screens/GameScreen';
 function App() {
 
     const [view, setView] = useState<'home' | 'lobby'>('home');
+    const [nickname, setNickname] = useState('');
+    const [roomCode, setRoomCode] = useState('');
+    const [players, setPlayers] = useState<string[]>([]);
+    const [error, setError] = useState<string | null>(null);
 
+    // frontend PASSIVE LISTENER
     useEffect(() => {
-        socket.on("user_joined", (data) => {
-            console.log("New player in the lobby:", data.user);
+        socket.on("lobby_joined", (data) => {
+            setRoomCode(data.lobby);
+            setPlayers(data.players);
+            setView('lobby'); // move rooms
+        });
+
+        socket.on("join_error", (data) => {
+            setError(data.message);
         });
 
         return () => {
-            socket.off("user_joined");
+            socket.off("lobby_joined");
+            socket.off("join_error");
         };
     }, []);
 
+    // frontend TRIGGER MESSENGER
+
     // SYNC: JOIN LOBBY
-    const goToLobby = () => {
-        socket.connect(); // opens the connection
-        socket.emit("join_lobby", { lobby: "MainRoom" });
-        setView('lobby');
+    const goToLobby = (nickname: string, lobbyId: string) => {
+        // global NN for frontend
+        setNickname(nickname);
+
+        // connect
+        if (!socket.connected) socket.connect();
+
+        // message to backend
+        socket.emit("join_lobby", {
+            user: nickname,
+            lobby: lobbyId
+        });
     };
 
     // SYNC: RETURN HOME
     const goToHome = () => {
-        socket.emit("leave_lobby", { lobby: "MainRoom" });
+        socket.emit("leave_lobby", {
+            lobby: roomCode,
+            user: nickname
+        });
         setView('home');
+        // Reset local room data
+        setRoomCode('');
+        setPlayers([]);
     };
+
+    // SYNC: ACTIVE LOBBY
+    socket.on("user_left", (data) => {
+        setPlayers(data.players);
+    });
 
     return (
         <div className="app-main">
             {view === 'home' ? (
-                <Home onStart={goToLobby} />
+                <Home onJoin={goToLobby} externalError={error} />
             ) : (
                 <Game onBack={goToHome} />
             )}
