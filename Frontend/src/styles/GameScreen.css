@@ -16,3 +16,74 @@
 .btn-back:hover {
     background-color: #444;
 }
+
+.info-bar {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    justify-content: center;
+    background-color: #4c6987;
+    color: white;
+    margin-right: 70%;
+    border: 2px, solid, rgb(8, 43, 44);
+}
+
+.info-box {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 8px 15px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-family: sans-serif;
+}
+
+.info-box span {
+    font-size: 0.8rem;
+    color: #bdc3c7;
+    margin-right: 8px;
+}
+
+.info-box strong {
+    color: #27ae60;
+    /* The success green you used before */
+    letter-spacing: 1px;
+}
+
+.lobby-card {
+    background: #34495e;
+    padding: 20px;
+    border-radius: 15px;
+    width: 300px;
+    margin: 20px auto;
+}
+
+.player-box-list {
+    background: #2c3e50;
+    border-radius: 10px;
+    padding: 10px;
+    max-height: 200px;
+    /* Limits height */
+    overflow-y: auto;
+    /* Adds scrollbar if too many players */
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.player-tag {
+    display: flex;
+    align-items: center;
+    background: #ecf0f1;
+    color: #2c3e50;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #27ae60;
+    border-radius: 50%;
+    margin-right: 10px;
+}

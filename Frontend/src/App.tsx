@@ -8,14 +8,14 @@ function App() {
 
     const [view, setView] = useState<'home' | 'lobby'>('home');
     const [nickname, setNickname] = useState('');
-    const [roomCode, setRoomCode] = useState('');
+    const [lobbyId, setLobbyId] = useState('');
     const [players, setPlayers] = useState<string[]>([]);
     const [error, setError] = useState<string | null>(null);
 
     // frontend PASSIVE LISTENER
     useEffect(() => {
         socket.on("lobby_joined", (data) => {
-            setRoomCode(data.lobby);
+            setLobbyId(data.lobby);
             setPlayers(data.players);
             setView('lobby'); // move rooms
         });
@@ -50,12 +50,12 @@ function App() {
     // SYNC: RETURN HOME
     const goToHome = () => {
         socket.emit("leave_lobby", {
-            lobby: roomCode,
+            lobby: lobbyId,
             user: nickname
         });
         setView('home');
         // Reset local room data
-        setRoomCode('');
+        setLobbyId('');
         setPlayers([]);
     };
 
@@ -69,7 +69,12 @@ function App() {
             {view === 'home' ? (
                 <Home onJoin={goToLobby} externalError={error} />
             ) : (
-                <Game onBack={goToHome} />
+                <Game
+                    nickname={nickname}
+                    lobbyId={lobbyId}
+                    players={players}
+                    onBack={() => goToHome()}
+                />
             )}
         </div>
     );

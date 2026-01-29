@@ -90,7 +90,7 @@ async def handle_leave(sid, data):
         lobby_id = sid_to_nick[sid]["lobby"]
         await disconnect(sid) 
         await sio.leave_room(sid, lobby_id)
-        print(f"User {sid} manually left lobby: {lobby_id}")
+        print(f"User {sid_to_nick[sid]["name"]} manually left lobby: {lobby_id}")
 
 # ---------------------------------------------
 
