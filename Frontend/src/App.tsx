@@ -1,12 +1,13 @@
 import './App.css'
 import { useState, useEffect } from 'react'
 import { socket } from './services/socket';
-import Home from './screens/HomeScreen';
-import Game from './screens/GameScreen';
+import GameScreen from './screens/GameScreen';
+import HomeScreen from './screens/HomeScreen';
+import RecordingScreen from './screens/RecordingScreen';
 
 function App() {
 
-    const [view, setView] = useState<'home' | 'lobby'>('home');
+    const [view, setView] = useState<'home' | 'lobby' | 'action'>('action');
     const [nickname, setNickname] = useState('');
     const [lobbyId, setLobbyId] = useState('');
     const [players, setPlayers] = useState<string[]>([]);
@@ -66,14 +67,27 @@ function App() {
 
     return (
         <div className="app-main">
-            {view === 'home' ? (
-                <Home onJoin={goToLobby} externalError={error} />
-            ) : (
-                <Game
+            {view === 'home' && (
+                <HomeScreen onJoin={goToLobby} externalError={error} />
+            )}
+
+            {view === 'lobby' && (
+                <GameScreen
                     nickname={nickname}
                     lobbyId={lobbyId}
                     players={players}
                     onBack={() => goToHome()}
+                />
+            )}
+
+            {view === 'action' && (
+                <RecordingScreen
+                    nickname={nickname}
+                    lobbyId={lobbyId}
+                    players={players}
+                    recDuration={10} // Example value
+                    roundDuration={15} // Example value
+                    onBack={() => setView('home')}
                 />
             )}
         </div>

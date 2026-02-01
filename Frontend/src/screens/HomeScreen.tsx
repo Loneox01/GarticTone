@@ -9,7 +9,7 @@ interface HomeProps {
     externalError: string | null;
 }
 
-const Home = ({ onJoin, externalError }: HomeProps) => {
+const HomeScreen = ({ onJoin, externalError }: HomeProps) => {
     const [nickname, setNickname] = useState('');
     const [lobbyId, setLobbyId] = useState('');
     const [placeholderNN, setPlaceholderNN] = useState('Nickname');
@@ -78,4 +78,4 @@ const Home = ({ onJoin, externalError }: HomeProps) => {
     );
 };
 
-export default Home;
+export default HomeScreen;

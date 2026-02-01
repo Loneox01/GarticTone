@@ -1,4 +1,12 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
+import * as Tone from "tone";
+import sampler from "./Sampler";
+
+interface KeyboardProps {
+    // recording prop, optional
+    onPlayNote?: (noteName: string) => void;
+    onStopNote?: (noteName: string) => void;
+}
 
 interface Key {
     note: string;
@@ -20,97 +28,61 @@ const OCTAVE: Key[] = [
     { note: "B", type: "white" },
 ];
 
-// Sound dict
-const SEMITONE_MAP: Record<string, number> = {
-    C: 0,
-    "C#": 1,
-    D: 2,
-    "D#": 3,
-    E: 4,
-    F: 5,
-    "F#": 6,
-    G: 7,
-    "G#": 8,
-    A: 9,
-    "A#": 10,
-    B: 11,
+const getNoteName = (id: string) => {
+    const match = id.match(/^([A-G]#?)(\d+)$/);
+    if (!match) return null;
+    return `${match[1]}${Number(match[2]) + 3}`;
 };
 
-// Convert key to frequency
-function keyIdToFrequency(id: string): number {
-    const match = id.match(/^([A-G]#?)(\d+)$/);
-    if (!match) return 440;
-
-    const [, note, uiOctStr] = match;
-    const uiOct = Number(uiOctStr);
-
-    // Map UI octaves 0–2 to musical octaves 3–5
-    const realOct = uiOct + 3;
-
-    const midi = 12 + realOct * 12 + SEMITONE_MAP[note]; // C0 = 12
-    return 440 * Math.pow(2, (midi - 69) / 12);
-}
-
-const Keyboard = () => {
+const Keyboard = ({ onPlayNote, onStopNote }: KeyboardProps) => {
     const numOctaves = 3;
-    const keyboard = Array.from({ length: numOctaves }, (_, octaveIndex) =>
-        OCTAVE.map((key) => ({
-            ...key,
-            id: `${key.note}${octaveIndex}`, // i.e. C0, B#2, etc
-        })),
-    ).flat();
+    const keyboard = [
+        ...Array.from({ length: numOctaves }, (_, octaveIndex) =>
+            OCTAVE.map((key) => ({
+                ...key,
+                id: `${key.note}${octaveIndex}`,
+            }))
+        ).flat(),
+        // high C6
+        { note: "C", type: "white", id: `C${numOctaves}` }
+    ];
 
     // creates an array of keys, i.e. [ { note: 'C',  type: 'white', id: 'C0' }, ... ]
 
     const [pressedId, setPressedId] = useState<string | null>(null);
     const [hoveredId, setHoveredId] = useState<string | null>(null);
 
-    const audioCtxRef = useRef<AudioContext | null>(null);
-    const activeNotesRef = useRef<
-        Map<string, { osc: OscillatorNode; gain: GainNode }>
-    >(new Map());
-
     async function startNote(keyId: string) {
-        audioCtxRef.current ??= new AudioContext();
-        const ctx = audioCtxRef.current;
+        // Standard Tone.js safety: Audio won't play until a user interaction
+        if (Tone.getContext().state !== 'running') {
+            await Tone.start();
+        }
 
-        await ctx.resume();
+        const noteName = getNoteName(keyId);
+        if (!noteName) return;
 
-        if (activeNotesRef.current.has(keyId)) return;
+        // triggerAttack starts the sound
+        sampler.triggerAttack(noteName);
 
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
+        setPressedId(keyId); // Update UI
 
-        // Choose oscillation type;
-        osc.type = "sine";
-        // osc.type = "triangle";
-        // osc.type = "square";
-        osc.frequency.value = keyIdToFrequency(keyId);
-
-        const now = ctx.currentTime;
-        gain.gain.setValueAtTime(0.0001, now);
-        gain.gain.exponentialRampToValueAtTime(0.2, now + 0.01);
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-
-        osc.start();
-
-        activeNotesRef.current.set(keyId, { osc, gain });
+        if (onPlayNote) {
+            onPlayNote(noteName);
+        }
     }
 
     function stopNote(keyId: string) {
-        const ctx = audioCtxRef.current;
-        const node = activeNotesRef.current.get(keyId);
-        if (!ctx || !node) return;
+        const noteName = getNoteName(keyId);
+        if (!noteName) return;
 
-        const now = ctx.currentTime;
-        node.gain.gain.cancelScheduledValues(now);
-        node.gain.gain.setValueAtTime(node.gain.gain.value, now);
-        node.gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
+        // triggerRelease starts the "fade out" (release) phase
+        sampler.triggerRelease(noteName);
 
-        node.osc.stop(now + 0.06);
-        activeNotesRef.current.delete(keyId);
+        setPressedId(null); // Reset UI
+
+        if (onStopNote) {
+            onStopNote(noteName);
+        }
     }
 
     return (

@@ -9,7 +9,7 @@ interface GameScreenProps {
     onBack: (nickname: string, lobbyId: string) => void;
 }
 
-const Game = ({ onBack, nickname, lobbyId, players }: GameScreenProps) => {
+const GameScreen = ({ onBack, nickname, lobbyId, players }: GameScreenProps) => {
     return (
         <div className="game-container">
             <button onClick={() => onBack(nickname, lobbyId)} className="btn-back">
@@ -37,4 +37,4 @@ const Game = ({ onBack, nickname, lobbyId, players }: GameScreenProps) => {
     );
 };
 
-export default Game;
+export default GameScreen;
