@@ -3,13 +3,14 @@ import { useState, useEffect } from 'react'
 import { socket } from './services/socket';
 import Home from './screens/HomeScreen';
 import Game from './screens/GameScreen';
+import type { Player } from './types/Player';
 
 function App() {
 
     const [view, setView] = useState<'home' | 'lobby'>('home');
     const [nickname, setNickname] = useState('');
     const [lobbyId, setLobbyId] = useState('');
-    const [players, setPlayers] = useState<string[]>([]);
+    const [players, setPlayers] = useState<Player[]>([]);
     const [error, setError] = useState<string | null>(null);
 
     // frontend PASSIVE LISTENER

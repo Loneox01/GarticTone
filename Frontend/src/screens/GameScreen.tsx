@@ -1,15 +1,17 @@
 import Keyboard from "../components/Keyboard";
 import '../styles/GameScreen.css';
 import '../styles/Keyboard.css';
+import type { Player } from "../types/Player";
 
 interface GameScreenProps {
     nickname: string;
     lobbyId: string;
-    players: string[];
+    players: Player[];
     onBack: (nickname: string, lobbyId: string) => void;
 }
 
 const Game = ({ onBack, nickname, lobbyId, players }: GameScreenProps) => {
+
     return (
         <div className="game-container">
             <button onClick={() => onBack(nickname, lobbyId)} className="btn-back">
@@ -28,7 +30,7 @@ const Game = ({ onBack, nickname, lobbyId, players }: GameScreenProps) => {
                 {players.map((player, index) => (
                     <div key={index} className="player-tag">
                         <div className="status-dot"></div>
-                        {player} {player === nickname && "(You)"}
+                        {player.nickname} {player.nickname === nickname && "(You)"}
                     </div>
                 ))}
             </div>

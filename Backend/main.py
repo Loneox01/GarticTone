@@ -2,10 +2,13 @@ import socketio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from schemas.player import Player
+from schemas.lobby import Lobby
+
 import random
 import string
 
-lobbies = {}
+lobbies : dict[str, Lobby] = {}
 sid_to_nick = {}
 NUM_CHAR_LID = 6
 
@@ -30,7 +33,7 @@ async def disconnect(sid):
         
         await sio.emit("user_left", {
             "user": name,
-            "players": updated_lobby["players"] if updated_lobby else []
+            "players": serialize_players(updated_lobby.players) if updated_lobby else []
         }, room=lobby_id)
 
         # update sid_to_nick
@@ -38,11 +41,13 @@ async def disconnect(sid):
         print(f"Cleaned up {name} after disconnect.")
 
 # ---------------------------------------------
+
 # SYNC: JOIN LOBBY
 @sio.on("join_lobby")
 async def handle_join(sid, data):
     username = data.get('user', '').strip()
     requested_lobby = data.get('lobby', '').strip().upper()
+    is_host = False
 
     if requested_lobby:
         if requested_lobby not in lobbies:
@@ -53,15 +58,24 @@ async def handle_join(sid, data):
     else:
         # blank id, generate
         lobby_id = generate_unique_id()
-        lobbies[lobby_id] = {"players": []}
+        lobbies[lobby_id] = Lobby(
+            lobby_id= lobby_id,
+            players={}
+        )
+
+        # mark user as host
+        is_host = True
 
     # if name in lobby is taken
-    if lobby_id in lobbies and username in lobbies[lobby_id]["players"]:
+    if lobby_id in lobbies and username in lobbies[lobby_id].players:
         await sio.emit('join_error', {'message': 'NICKNAME_TAKEN'}, room=sid)
         return
     
     # update globals
-    lobbies[lobby_id]["players"].append(username)
+    lobbies[lobby_id].players[username] = Player(
+        nickname=username,
+        is_host=is_host
+    )
     sid_to_nick[sid] = {"name": username, "lobby": lobby_id}
 
     await sio.enter_room(sid, lobby_id)
@@ -69,7 +83,8 @@ async def handle_join(sid, data):
     await sio.emit('lobby_joined', {
         'username': username,
         'lobby': lobby_id,
-        'players': lobbies[lobby_id]["players"]
+        'is_host': is_host,
+        'players': serialize_players(lobbies[lobby_id].players)
     }, room=lobby_id)
 
     print(f"User {username} joined {lobby_id}")
@@ -90,7 +105,6 @@ async def handle_leave(sid, data):
         lobby_id = sid_to_nick[sid]["lobby"]
         await disconnect(sid) 
         await sio.leave_room(sid, lobby_id)
-        print(f"User {sid_to_nick[sid]["name"]} manually left lobby: {lobby_id}")
 
 # ---------------------------------------------
 
@@ -98,15 +112,23 @@ async def handle_leave(sid, data):
 def remove_player_from_lobby(lobby_id, username):
     """Removes a player and deletes the lobby if it's empty"""
     if lobby_id in lobbies:
-        if username in lobbies[lobby_id]["players"]:
-            lobbies[lobby_id]["players"].remove(username)
+        if username in lobbies[lobby_id].players:
+            lobbies[lobby_id].players.pop(username)
             
             # clean empty lobbies
-            if not lobbies[lobby_id]["players"]:
+            if not lobbies[lobby_id].players:
                 del lobbies[lobby_id]
                 return None # lobby is gone
+            
         return lobbies.get(lobby_id)
+    
     return None
+
+# ---------------------------------------------
+
+def serialize_players(players: dict[str, Player]):
+    """Serialize player dictionary to send to frontend"""
+    return [p.model_dump() for p in players.values()]
 
 # ---------------------------------------------
 
