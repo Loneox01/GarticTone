@@ -4,8 +4,7 @@ import Keyboard from "../components/Keyboard";
 import sampler from '../components/Sampler';
 import type { Player } from "../types/player.ts";
 
-import '../styles/RecordingScreen.css';
-import '../styles/Keyboard.css';
+import styles from '../styles/RecordingScreen.module.css';
 
 interface RecordingScreenProps {
     nickname: string;
@@ -147,36 +146,36 @@ const RecordingScreen = ({ nickname, lobbyId, recDuration, roundDuration, onBack
     };
 
     return (
-        <div className="screen-container">
+        <div className={styles['screen-container']}>
             { /* leave + timers */}
-            <div className="top-bar">
-                <div className="left-section">
-                    <button onClick={() => onBack(nickname, lobbyId)} className="btn-back">
-                        <span className="icon">← </span>
-                        <span className="text">Leave</span>
+            <div className={styles['top-bar']}>
+                <div className={styles['left-section']}>
+                    <button onClick={() => onBack(nickname, lobbyId)} className={styles['btn-back']}>
+                        <span className={styles['icon']}>← </span>
+                        <span className={styles['text']}>Leave</span>
                     </button>
                 </div>
 
-                <div className="middle-section">
-                    <div className={`timer ${isRecording ? 'active' : ''}`}>
+                <div className={styles['middle-section']}>
+                    <div className={`${styles['timer']} ${isRecording ? styles['active'] : ''}`}>
                         {recTimeLeft.toFixed(1)}s
                     </div>
                 </div>
 
-                <div className="right-section">
-                    <div className={`round-timer 
-                        ${roundTimeLeft < 10 ? 'panic' : ''} 
-                        ${roundTimeLeft <= 3 ? 'final' : ''}`
+                <div className={styles['right-section']}>
+                    <div className={`${styles['round-timer']} 
+                        ${roundTimeLeft < 10 ? styles['panic'] : ''} 
+                        ${roundTimeLeft <= 3 ? styles['final'] : ''}`
                     }>
                         Round Ends: {roundTimeLeft}s
                     </div>
                 </div>
             </div>
             { /* buttons */}
-            <div className="controls">
+            <div className={styles['controls']}>
                 <button
                     onClick={toggleRecording}
-                    className={`btn-rec ${isRecording ? 'recording' : ''}`}
+                    className={`${styles['btn-rec']} ${isRecording ? styles['recording'] : ''}`}
                     disabled={isPlayback} // disable record if playing back
                 >
                     {isRecording ? "Stop" : "Record"}
@@ -185,7 +184,7 @@ const RecordingScreen = ({ nickname, lobbyId, recDuration, roundDuration, onBack
                 <button
                     onClick={playBack}
                     disabled={isRecording || recording.length === 0}
-                    className={`btn-play ${isPlayback ? 'playing' : ''}`}
+                    className={`${styles['btn-play']} ${isPlayback ? styles['playing'] : ''}`}
                 >
                     {isPlayback ? "Stop" : "Play Back"}
                 </button>

@@ -49,6 +49,10 @@
     font-weight: bold;
 }
 
+.btn-back:hover {
+    background-color: #444;
+}
+
 /* 2. RECORDING TIMER */
 .timer {
     font-family: 'Courier New', Courier, monospace;

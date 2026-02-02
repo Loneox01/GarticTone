@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import '../styles/DriftingNotes.css';
+import styles from '../styles/DriftingNotes.module.css';
 
 
 const MusicBackground = () => {
@@ -31,11 +31,11 @@ const MusicBackground = () => {
     }, []);
 
     return (
-        <div className="music-container">
+        <div className={styles['music-container']}>
             {staticNotes.map((note) => (
                 <span
                     key={note.id}
-                    className="floating-note"
+                    className={styles['floating-note']}
                     style={{
                         top: `${note.top}%`,
                         animationDelay: `${note.delay}s`,

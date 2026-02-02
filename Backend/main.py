@@ -74,7 +74,7 @@ async def handle_join(sid, data):
     # update globals
     lobbies[lobby_id].players[username] = Player(
         nickname=username,
-        is_host=is_host
+        isHost=is_host
     )
     sid_to_nick[sid] = {"name": username, "lobby": lobby_id}
 
@@ -83,7 +83,7 @@ async def handle_join(sid, data):
     await sio.emit('lobby_joined', {
         'username': username,
         'lobby': lobby_id,
-        'is_host': is_host,
+        'isHost': is_host,
         'players': serialize_players(lobbies[lobby_id].players)
     }, room=lobby_id)
 

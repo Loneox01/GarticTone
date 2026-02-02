@@ -1,8 +1,6 @@
-import '../styles/HomeScreen.css';
+import styles from '../styles/Homescreen.module.css';
 import { useState, useEffect } from 'react'
 import MusicBackground from '../components/DriftingNotes';
-import '../styles/DriftingNotes.css';
-
 
 interface HomeProps {
     onJoin: (nickname: string, lobbyId: string) => void;
@@ -51,24 +49,24 @@ const HomeScreen = ({ onJoin, externalError }: HomeProps) => {
     };
 
     return (
-        <div className="home-container">
+        <div className={styles['home-container']}>
             <MusicBackground />
-            <div className="home-content">
+            <div className={styles['home-content']}>
                 <input
                     // NICKNAME INPUT BAR            
-                    className={`game-input ${isShaking && nnError ? 'error-shake' : ''}`} placeholder={placeholderNN}
+                    className={`${styles['game-input']} ${isShaking && nnError ? styles['error-shake'] : ''}`} placeholder={placeholderNN}
                     value={nickname}
                     onChange={(e) => setNickname(e.target.value)}
                 />
                 <input
                     // LOBBYID INPUT BAR
-                    className={`game-input ${isShaking && lidError ? 'error-shake' : ''}`} placeholder={placeholderLID}
+                    className={`${styles['game-input']} ${isShaking && lidError ? styles['error-shake'] : ''}`} placeholder={placeholderLID}
                     value={lobbyId}
                     onChange={(e) => setLobbyId(e.target.value)}
                 />
                 <button
                     // START BUTTON
-                    className="btn-start"
+                    className={styles['btn-start']}
                     onClick={handleJoin}
                 >
                     PLAY

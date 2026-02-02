@@ -4,13 +4,15 @@
 }
 
 .btn-back {
-    padding: 8px 16px;
-    margin-bottom: 20px;
-    cursor: pointer;
-    background-color: #333;
-    color: #fff;
-    border: 1px solid #555;
+    padding: 10px 20px;
+    font-size: 1.0rem;
+    color: #ff4444;
+    border: 1px solid #ff4444;
+    background: transparent;
     border-radius: 4px;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-weight: bold;
 }
 
 .btn-back:hover {

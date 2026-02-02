@@ -1,6 +1,7 @@
 import { useState } from "react";
 import * as Tone from "tone";
 import sampler from "./Sampler";
+import styles from '../styles/Keyboard.module.css';
 
 interface KeyboardProps {
     // recording prop, optional
@@ -86,7 +87,7 @@ const Keyboard = ({ onPlayNote, onStopNote }: KeyboardProps) => {
     }
 
     return (
-        <div className="keyboard">
+        <div className={styles['keyboard']}>
             {keyboard.map((key) => {
                 const isPressed = pressedId === key.id;
                 const isHovered = hoveredId === key.id;
@@ -94,12 +95,11 @@ const Keyboard = ({ onPlayNote, onStopNote }: KeyboardProps) => {
                 // selects built in CSS attribute className by conditional, init as wrapper and key Class
                 const wrapperClass =
                     key.type === "white"
-                        ? "white_key_wrapper"
-                        : "black_key_wrapper";
-                const keyClass =
-                    (key.type === "white" ? "white_key" : "black_key") +
-                    (isPressed ? " pressed" : "") +
-                    (isHovered ? " hovered" : "");
+                        ? styles['white_key_wrapper']
+                        : styles['black_key_wrapper'];
+
+                const keyClass = `${key.type === "white" ? styles['white_key'] : styles['black_key']} ${isPressed ? styles['pressed'] : ""
+                    } ${isHovered ? styles['hovered'] : ""}`;
 
                 return (
                     /* wrapper div handles interactives and "hitboxes" */

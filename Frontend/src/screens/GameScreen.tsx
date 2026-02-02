@@ -1,6 +1,5 @@
 import Keyboard from "../components/Keyboard";
-import '../styles/GameScreen.css';
-import '../styles/Keyboard.css';
+import styles from '../styles/GameScreen.module.css';
 import type { Player } from "../types/player.ts";
 
 interface GameScreenProps {
@@ -12,24 +11,30 @@ interface GameScreenProps {
 
 const GameScreen = ({ onBack, nickname, lobbyId, players }: GameScreenProps) => {
     return (
-        <div className="game-container">
-            <button onClick={() => onBack(nickname, lobbyId)} className="btn-back">
-                ← Leave Lobby
+        <div className={styles['game-container']}>
+            <button onClick={() => onBack(nickname, lobbyId)} className={styles['btn-back']}>
+                ← Leave
             </button>
             <hr style={{ borderColor: '#444', margin: '20px 0' }} />
-            <div className="info-bar">
-                <div className="info-box">
+            <div className={styles['info-bar']}>
+                <div className={styles['info-box']}>
                     <span>PLAYER:</span> <strong>{nickname}</strong>
                 </div>
-                <div className="info-box">
+                <div className={styles['info-box']}>
                     <span>LOBBY:</span> <strong>{lobbyId}</strong>
                 </div>
             </div>
-            <div className="player-box-list">
+            <div className={styles['player-box-list']}>
                 {players.map((player, index) => (
-                    <div key={index} className="player-tag">
-                        <div className="status-dot"></div>
-                        {player.nickname} {player.nickname === nickname && "(You)"}
+                    <div key={index} className={styles['player-tag']}>
+                        <div className={styles['status-dot']}></div>
+                        <span className={styles['player-name']}>{player.nickname}</span>
+
+                        {/* Label for the current user */}
+                        {player.nickname === nickname && <span className={styles['label-you']}> (You)</span>}
+
+                        {/* Label for the host */}
+                        {player.isHost && <span className={styles['label-host']}> (Host)</span>}
                     </div>
                 ))}
             </div>
