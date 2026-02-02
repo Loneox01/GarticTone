@@ -1,5 +1,8 @@
 import '../styles/HomeScreen.css';
 import { useState, useEffect } from 'react'
+import MusicBackground from '../components/DriftingNotes';
+import '../styles/DriftingNotes.css';
+
 
 interface HomeProps {
     onJoin: (nickname: string, lobbyId: string) => void;
@@ -49,25 +52,28 @@ const Home = ({ onJoin, externalError }: HomeProps) => {
 
     return (
         <div className="home-container">
-            <input
-                // NICKNAME INPUT BAR            
-                className={`game-input ${isShaking && nnError ? 'error-shake' : ''}`} placeholder={placeholderNN}
-                value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
-            />
-            <input
-                // LOBBYID INPUT BAR
-                className={`game-input ${isShaking && lidError ? 'error-shake' : ''}`} placeholder={placeholderLID}
-                value={lobbyId}
-                onChange={(e) => setLobbyId(e.target.value)}
-            />
-            <button
-                // START BUTTON
-                className="btn-start"
-                onClick={handleJoin}
-            >
-                PLAY
-            </button>
+            <MusicBackground />
+            <div className="home-content">
+                <input
+                    // NICKNAME INPUT BAR            
+                    className={`game-input ${isShaking && nnError ? 'error-shake' : ''}`} placeholder={placeholderNN}
+                    value={nickname}
+                    onChange={(e) => setNickname(e.target.value)}
+                />
+                <input
+                    // LOBBYID INPUT BAR
+                    className={`game-input ${isShaking && lidError ? 'error-shake' : ''}`} placeholder={placeholderLID}
+                    value={lobbyId}
+                    onChange={(e) => setLobbyId(e.target.value)}
+                />
+                <button
+                    // START BUTTON
+                    className="btn-start"
+                    onClick={handleJoin}
+                >
+                    PLAY
+                </button>
+            </div>
         </div>
     );
 };
