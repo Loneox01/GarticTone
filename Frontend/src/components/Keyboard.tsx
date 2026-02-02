@@ -1,4 +1,12 @@
 import { useState } from "react";
+import * as Tone from "tone";
+import sampler from "./Sampler";
+
+interface KeyboardProps {
+    // recording prop, optional
+    onPlayNote?: (noteName: string) => void;
+    onStopNote?: (noteName: string) => void;
+}
 
 interface Key {
     note: string;
@@ -20,19 +28,62 @@ const OCTAVE: Key[] = [
     { note: "B", type: "white" },
 ];
 
-const Keyboard = () => {
+const getNoteName = (id: string) => {
+    const match = id.match(/^([A-G]#?)(\d+)$/);
+    if (!match) return null;
+    return `${match[1]}${Number(match[2]) + 3}`;
+};
+
+const Keyboard = ({ onPlayNote, onStopNote }: KeyboardProps) => {
     const numOctaves = 3;
-    const keyboard = Array.from({ length: numOctaves }, (_, octaveIndex) =>
-        OCTAVE.map((key) => ({
-            ...key,
-            id: `${key.note}${octaveIndex}`, // i.e. C0, B#2, etc
-        })),
-    ).flat();
+    const keyboard = [
+        ...Array.from({ length: numOctaves }, (_, octaveIndex) =>
+            OCTAVE.map((key) => ({
+                ...key,
+                id: `${key.note}${octaveIndex}`,
+            }))
+        ).flat(),
+        // high C6
+        { note: "C", type: "white", id: `C${numOctaves}` }
+    ];
 
     // creates an array of keys, i.e. [ { note: 'C',  type: 'white', id: 'C0' }, ... ]
 
     const [pressedId, setPressedId] = useState<string | null>(null);
     const [hoveredId, setHoveredId] = useState<string | null>(null);
+
+    async function startNote(keyId: string) {
+        // Standard Tone.js safety: Audio won't play until a user interaction
+        if (Tone.getContext().state !== 'running') {
+            await Tone.start();
+        }
+
+        const noteName = getNoteName(keyId);
+        if (!noteName) return;
+
+        // triggerAttack starts the sound
+        sampler.triggerAttack(noteName);
+
+        setPressedId(keyId); // Update UI
+
+        if (onPlayNote) {
+            onPlayNote(noteName);
+        }
+    }
+
+    function stopNote(keyId: string) {
+        const noteName = getNoteName(keyId);
+        if (!noteName) return;
+
+        // triggerRelease starts the "fade out" (release) phase
+        sampler.triggerRelease(noteName);
+
+        setPressedId(null); // Reset UI
+
+        if (onStopNote) {
+            onStopNote(noteName);
+        }
+    }
 
     return (
         <div className="keyboard">
@@ -41,7 +92,10 @@ const Keyboard = () => {
                 const isHovered = hoveredId === key.id;
 
                 // selects built in CSS attribute className by conditional, init as wrapper and key Class
-                const wrapperClass = key.type === "white" ? "white_key_wrapper" : "black_key_wrapper";
+                const wrapperClass =
+                    key.type === "white"
+                        ? "white_key_wrapper"
+                        : "black_key_wrapper";
                 const keyClass =
                     (key.type === "white" ? "white_key" : "black_key") +
                     (isPressed ? " pressed" : "") +
@@ -52,19 +106,33 @@ const Keyboard = () => {
                     <div
                         key={key.id}
                         className={wrapperClass}
-                        onMouseDown={() => setPressedId(key.id)}
-                        onMouseUp={() => setPressedId(null)}
-                        onMouseEnter={() => setHoveredId(key.id)}
+                        onMouseDown={() => {
+                            setPressedId(key.id);
+                            void startNote(key.id);
+                        }}
+                        onMouseUp={() => {
+                            setPressedId(null);
+                            stopNote(key.id);
+                        }}
+                        onMouseEnter={() => {
+                            setHoveredId(key.id);
+                        }}
                         onMouseLeave={() => {
                             setPressedId(null);
                             setHoveredId(null);
+                            stopNote(key.id);
                         }}
-                        onTouchStart={() => setPressedId(key.id)}
-                        onTouchEnd={() => setPressedId(null)}
+                        onTouchStart={() => {
+                            setPressedId(key.id);
+                            void startNote(key.id);
+                        }}
+                        onTouchEnd={() => {
+                            setPressedId(null);
+                            stopNote(key.id);
+                        }}
                     >
                         {/* key div handles visuals */}
-                        <div
-                            className={keyClass}>
+                        <div className={keyClass}>
                             {key.type === "white" && <span>{key.note}</span>}
                         </div>
                     </div>

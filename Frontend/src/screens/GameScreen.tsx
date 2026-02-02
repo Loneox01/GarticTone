@@ -1,7 +1,7 @@
 import Keyboard from "../components/Keyboard";
 import '../styles/GameScreen.css';
 import '../styles/Keyboard.css';
-import type { Player } from "../types/Player";
+import type { Player } from "../types/player.ts";
 
 interface GameScreenProps {
     nickname: string;
@@ -10,8 +10,7 @@ interface GameScreenProps {
     onBack: (nickname: string, lobbyId: string) => void;
 }
 
-const Game = ({ onBack, nickname, lobbyId, players }: GameScreenProps) => {
-
+const GameScreen = ({ onBack, nickname, lobbyId, players }: GameScreenProps) => {
     return (
         <div className="game-container">
             <button onClick={() => onBack(nickname, lobbyId)} className="btn-back">
@@ -39,4 +38,4 @@ const Game = ({ onBack, nickname, lobbyId, players }: GameScreenProps) => {
     );
 };
 
-export default Game;
+export default GameScreen;
