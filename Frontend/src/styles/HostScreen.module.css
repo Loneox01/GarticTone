@@ -53,24 +53,25 @@
     letter-spacing: 1px;
 }
 
-/* --- NEW LAYOUT STRUCTURE --- */
+/* TOP BAR END */
 
 .main-content {
     display: flex;
     gap: 20px;
+    /* The "slight gap" */
     margin-bottom: 30px;
     align-items: flex-start;
-    /* Keeps the sidebar from stretching to panel height */
+    /* Keeps containers from stretching weirdly */
 }
 
 .player-sidebar {
     flex: 0 0 40%;
-    /* Fixed 40% width */
+    /* Fixed at 40%, won't grow or shrink */
 }
 
 .settings-panel {
     flex: 1;
-    /* Takes remaining 60% */
+    /* Takes up the remaining 60% */
     background: rgba(0, 0, 0, 0.2);
     border-radius: 12px;
     display: flex;
@@ -79,14 +80,10 @@
     border: 1px solid #444;
 }
 
-/* --- TABS & HEADERS --- */
-
+/* Tab Navigation */
 .tab-header {
     display: flex;
     border-bottom: 1px solid #444;
-    background: rgba(255, 255, 255, 0.03);
-    border-top-left-radius: 12px;
-    border-top-right-radius: 12px;
 }
 
 .tab-btn {
@@ -98,7 +95,6 @@
     cursor: pointer;
     font-weight: bold;
     transition: 0.2s;
-    border-bottom: 3px solid transparent;
 }
 
 .tab-btn.active {
@@ -107,33 +103,19 @@
     background: rgba(39, 174, 96, 0.05);
 }
 
-/* For the Guest Screen Title */
-.tab-label-static {
-    flex: 1;
-    padding: 15px;
-    color: #bdc3c7;
-    font-weight: bold;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    letter-spacing: 1px;
-    text-align: center;
-}
-
 .tab-content {
     padding: 20px;
     text-align: left;
-    color: #ecf0f1;
 }
-
-/* --- PLAYER LIST --- */
 
 .player-box-list {
     background: #2c3e50;
     border-radius: 10px;
     padding: 10px;
-    max-height: 400px;
-    /* Increased to fit the new layout better */
+    max-height: 200px;
+    /* Limits height */
     overflow-y: auto;
+    /* Adds scrollbar if too many players */
     display: flex;
     flex-direction: column;
     gap: 8px;

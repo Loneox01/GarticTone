@@ -1,0 +1,1 @@
+export type GameView = 'HOME' | 'LOBBY' | 'RECORDING' | 'HOSTLOBBY';

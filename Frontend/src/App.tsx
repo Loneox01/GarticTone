@@ -1,25 +1,36 @@
 import './App.css'
 import { useState, useEffect } from 'react'
 import { socket } from './services/socket';
-import type { Player } from './types/player.ts';
+
+import type { Lobby } from "./types/lobby.ts";
+import type { GameView } from './types/views.ts';
+
 import GameScreen from './screens/GameScreen';
 import HomeScreen from './screens/HomeScreen';
 import RecordingScreen from './screens/RecordingScreen';
+import HostScreen from './screens/HostScreen.tsx';
 
 function App() {
 
-    const [view, setView] = useState<'home' | 'lobby' | 'action'>('action');
+    const [view, setView] = useState<GameView>('HOME');
     const [nickname, setNickname] = useState('');
-    const [lobbyId, setLobbyId] = useState('');
-    const [players, setPlayers] = useState<Player[]>([]);
+    const [lobby, setLobby] = useState<Lobby | null>(null);;
     const [error, setError] = useState<string | null>(null);
 
     // frontend PASSIVE LISTENER
     useEffect(() => {
-        socket.on("lobby_joined", (data) => {
-            setLobbyId(data.lobby);
-            setPlayers(data.players);
-            setView('lobby'); // move rooms
+        socket.on("lobby_joined", (data: Lobby & { username: string }) => {
+            setLobby(data);
+            setView((currentView) => {
+                if (currentView === 'HOME') {
+                    return data.lobbyHost === data.username ? 'HOSTLOBBY' : 'LOBBY';
+                }
+                return currentView;
+            });
+        });
+
+        socket.on("user_left", (data: Lobby) => {
+            setLobby(data);
         });
 
         socket.on("join_error", (data) => {
@@ -28,6 +39,7 @@ function App() {
 
         return () => {
             socket.off("lobby_joined");
+            socket.off("user_left");
             socket.off("join_error");
         };
     }, []);
@@ -49,46 +61,46 @@ function App() {
         });
     };
 
-    // SYNC: RETURN HOME
     const goToHome = () => {
-        socket.emit("leave_lobby", {
-            lobby: lobbyId,
-            user: nickname
-        });
-        setView('home');
-        // Reset local room data
-        setLobbyId('');
-        setPlayers([]);
+        if (lobby) {
+            socket.emit("leave_lobby", {
+                lobby: lobby.lobbyId,
+                user: nickname
+            });
+        }
+        setView('HOME');
+        setLobby(null);
     };
-
-    // SYNC: ACTIVE LOBBY
-    socket.on("user_left", (data) => {
-        setPlayers(data.players);
-    });
 
     return (
         <div className="app-main">
-            {view === 'home' && (
+            {view === 'HOME' && (
                 <HomeScreen onJoin={goToLobby} externalError={error} />
             )}
 
-            {view === 'lobby' && (
+            {view === 'LOBBY' && lobby && (
                 <GameScreen
                     nickname={nickname}
-                    lobbyId={lobbyId}
-                    players={players}
+                    lobby={lobby} // Pass the whole object
                     onBack={() => goToHome()}
                 />
             )}
 
-            {view === 'action' && (
+            {view === 'RECORDING' && lobby && (
                 <RecordingScreen
                     nickname={nickname}
-                    lobbyId={lobbyId}
-                    players={players}
-                    recDuration={10} // Example value
-                    roundDuration={15} // Example value
-                    onBack={() => setView('home')}
+                    lobby={lobby}
+                    recDuration={10}
+                    roundDuration={15}
+                    onBack={() => goToHome()}
+                />
+            )}
+
+            {view === 'HOSTLOBBY' && lobby && (
+                <HostScreen
+                    nickname={nickname}
+                    lobby={lobby}
+                    onBack={() => goToHome()}
                 />
             )}
         </div>

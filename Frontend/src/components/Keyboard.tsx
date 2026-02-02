@@ -1,5 +1,5 @@
 import { useState } from "react";
-import * as Tone from "tone";
+import { start, getContext } from "tone";
 import sampler from "./Sampler";
 import styles from '../styles/Keyboard.module.css';
 
@@ -54,9 +54,9 @@ const Keyboard = ({ onPlayNote, onStopNote }: KeyboardProps) => {
     const [hoveredId, setHoveredId] = useState<string | null>(null);
 
     async function startNote(keyId: string) {
-        // Standard Tone.js safety: Audio won't play until a user interaction
-        if (Tone.getContext().state !== 'running') {
-            await Tone.start();
+        // Standard js safety: Audio won't play until a user interaction
+        if (getContext().state !== 'running') {
+            await start();
         }
 
         const noteName = getNoteName(keyId);

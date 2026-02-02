@@ -1,21 +1,21 @@
 import { useState, useRef, useEffect } from 'react'
-import * as Tone from "tone";
+import { now, start, getTransport, getContext } from "tone";
 import Keyboard from "../components/Keyboard";
 import sampler from '../components/Sampler';
-import type { Player } from "../types/player.ts";
+
+import type { Lobby } from "../types/lobby.ts";
 
 import styles from '../styles/RecordingScreen.module.css';
 
 interface RecordingScreenProps {
     nickname: string;
-    lobbyId: string;
-    players: Player[];
+    lobby: Lobby;
     recDuration: number;
     roundDuration: number;
-    onBack: (nickname: string, lobbyId: string) => void;
+    onBack: () => void;
 }
 
-const RecordingScreen = ({ nickname, lobbyId, recDuration, roundDuration, onBack, players }: RecordingScreenProps) => {
+const RecordingScreen = ({ nickname, lobby, recDuration, roundDuration, onBack }: RecordingScreenProps) => {
     const [isRecording, setIsRecording] = useState(false);
     const [recording, setRecording] = useState<{ type: 'on' | 'off', note: string, time: number }[]>([]);
 
@@ -49,7 +49,7 @@ const RecordingScreen = ({ nickname, lobbyId, recDuration, roundDuration, onBack
     useEffect(() => {
         if (isRecording) {
             timerRef.current = window.setInterval(() => {
-                const elapsed = Tone.now() - startTimeRef.current;
+                const elapsed = now() - startTimeRef.current;
                 const remaining = Math.max(0, recDuration - elapsed);
                 setRecTimeLeft(remaining);
 
@@ -70,22 +70,22 @@ const RecordingScreen = ({ nickname, lobbyId, recDuration, roundDuration, onBack
     // delta handler for held notes (note start/stop)
     const handleNoteStart = (noteName: string) => {
         if (!isRecording) return;
-        const elapsed = Tone.now() - startTimeRef.current;
+        const elapsed = now() - startTimeRef.current;
         setRecording(prev => [...prev, { type: 'on', note: noteName, time: elapsed }]);
     };
     const handleNoteStop = (noteName: string) => {
         if (!isRecording) return;
-        const elapsed = Tone.now() - startTimeRef.current;
+        const elapsed = now() - startTimeRef.current;
         setRecording(prev => [...prev, { type: 'off', note: noteName, time: elapsed }]);
     };
 
     const toggleRecording = async () => {
         if (!isRecording) {
-            await Tone.start();
+            await start();
 
             // override old recording
             setRecording([]);
-            startTimeRef.current = Tone.now();
+            startTimeRef.current = now();
             setIsRecording(true);
         } else {
             // manual end recording early
@@ -95,15 +95,15 @@ const RecordingScreen = ({ nickname, lobbyId, recDuration, roundDuration, onBack
 
     const playBack = async () => {
         // this checks for browser allowing audio
-        if (Tone.getContext().state !== 'running') {
-            await Tone.start();
+        if (getContext().state !== 'running') {
+            await start();
         }
 
         // stop playback
         if (isPlayback) {
-            Tone.getTransport().stop();
+            getTransport().stop();
             // clear upcoming notes
-            Tone.getTransport().cancel();
+            getTransport().cancel();
             // clear lingering souds
             sampler.releaseAll();
             // clear the auto-reset timer
@@ -120,13 +120,13 @@ const RecordingScreen = ({ nickname, lobbyId, recDuration, roundDuration, onBack
         setIsPlayback(true);
 
         // reset Transport to the beginning
-        Tone.getTransport().stop();
-        Tone.getTransport().cancel();
-        Tone.getTransport().position = 0;
+        getTransport().stop();
+        getTransport().cancel();
+        getTransport().position = 0;
 
         // schedule events ON THE TRANSPORT
         recording.forEach(event => {
-            Tone.getTransport().schedule((time) => {
+            getTransport().schedule((time) => {
                 if (event.type === 'on') {
                     sampler.triggerAttack(event.note, time);
                 } else {
@@ -135,13 +135,13 @@ const RecordingScreen = ({ nickname, lobbyId, recDuration, roundDuration, onBack
             }, event.time); // event.time is in seconds
         });
 
-        Tone.getTransport().start();
+        getTransport().start();
 
         // calculate end time to reset the button automatically
         const lastEventTime = recording[recording.length - 1].time;
         playbackTimeoutRef.current = window.setTimeout(() => {
             setIsPlayback(false);
-            Tone.getTransport().stop();
+            getTransport().stop();
         }, (lastEventTime + 1) * 1000); // +1s buffer
     };
 
@@ -150,7 +150,7 @@ const RecordingScreen = ({ nickname, lobbyId, recDuration, roundDuration, onBack
             { /* leave + timers */}
             <div className={styles['top-bar']}>
                 <div className={styles['left-section']}>
-                    <button onClick={() => onBack(nickname, lobbyId)} className={styles['btn-back']}>
+                    <button onClick={() => onBack()} className={styles['btn-back']}>
                         <span className={styles['icon']}>← </span>
                         <span className={styles['text']}>Leave</span>
                     </button>

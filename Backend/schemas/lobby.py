@@ -3,5 +3,6 @@ from .player import Player
 
 
 class Lobby(BaseModel):
-    lobby_id: str
+    lobbyId: str
     players: dict[str, Player]
+    lobbyHost: str

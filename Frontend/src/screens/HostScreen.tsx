@@ -1,15 +1,19 @@
+import { useState } from 'react'
+
 import Keyboard from "../components/Keyboard";
-import styles from '../styles/GameScreen.module.css';
+import styles from '../styles/HostScreen.module.css';
 
 import type { Lobby } from "../types/lobby.ts";
 
-interface GameScreenProps {
+interface HostScreenProps {
     nickname: string;
     lobby: Lobby;
     onBack: () => void;
 }
 
-const GameScreen = ({ onBack, nickname, lobby }: GameScreenProps) => {
+const HostScreen = ({ onBack, nickname, lobby }: HostScreenProps) => {
+    const [activeTab, setActiveTab] = useState<'modes' | 'options'>('modes');
+
     return (
         <div className={styles['game-container']}>
             <div className={styles['top-bar']}>
@@ -26,9 +30,8 @@ const GameScreen = ({ onBack, nickname, lobby }: GameScreenProps) => {
                     </div>
                 </div>
             </div>
-
-            {/* BLACK LINE SEPERATES TOP BAR FROM LOBBY ELEMENTS */}
             <hr style={{ borderColor: '#444', margin: '20px 0' }} />
+            {/* BLACK LINE SEPERATES TOP BAR FROM LOBBY ELEMENTS */}
 
             <div className={styles['main-content']}>
                 {/* LEFT SIDE: Player List (40%) */}
@@ -53,21 +56,35 @@ const GameScreen = ({ onBack, nickname, lobby }: GameScreenProps) => {
                     </div>
                 </div>
 
-                {/* RIGHT SIDE: View Only Panel (60%) */}
+                {/* RIGHT SIDE: Tabs & Settings (60%) */}
                 <div className={styles['settings-panel']}>
                     <div className={styles['tab-header']}>
-                        {/* No buttons here, just a static label for Guests */}
-                        <div className={styles['tab-label-static']}>
-                            Game Settings (Host Only)
-                        </div>
+                        <button
+                            className={`${styles['tab-btn']} ${activeTab === 'modes' ? styles['active'] : ''}`}
+                            onClick={() => setActiveTab('modes')}
+                        >
+                            Game Modes
+                        </button>
+                        <button
+                            className={`${styles['tab-btn']} ${activeTab === 'options' ? styles['active'] : ''}`}
+                            onClick={() => setActiveTab('options')}
+                        >
+                            Custom Options
+                        </button>
                     </div>
 
                     <div className={styles['tab-content']}>
-                        <div className={styles['modes-container']}>
-                            <h3>Selected Game Mode</h3>
-                            <p>Waiting for the host to choose...</p>
-                            {/* Later, you will map the modes here but with pointer-events: none */}
-                        </div>
+                        {activeTab === 'modes' ? (
+                            <div className={styles['modes-container']}>
+                                {/* Game mode selection goes here */}
+                                <p>Select a Game Mode</p>
+                            </div>
+                        ) : (
+                            <div className={styles['options-container']}>
+                                {/* Custom options go here */}
+                                <p>Configure Rules</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -76,4 +93,4 @@ const GameScreen = ({ onBack, nickname, lobby }: GameScreenProps) => {
     );
 };
 
-export default GameScreen;
+export default HostScreen;
