@@ -5,7 +5,7 @@ import { socket } from './services/socket';
 import type { Lobby } from "./types/lobby.ts";
 import type { GameView } from './types/views.ts';
 
-import GameScreen from './screens/GameScreen';
+import GuestScreen from './screens/GuestScreen';
 import HomeScreen from './screens/HomeScreen';
 import RecordingScreen from './screens/RecordingScreen';
 import HostScreen from './screens/HostScreen.tsx';
@@ -79,7 +79,7 @@ function App() {
             )}
 
             {view === 'LOBBY' && lobby && (
-                <GameScreen
+                <GuestScreen
                     nickname={nickname}
                     lobby={lobby} // Pass the whole object
                     onBack={() => goToHome()}
