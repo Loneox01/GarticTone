@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 import Keyboard from "../components/Keyboard";
 import styles from '../styles/HostScreen.module.css';
@@ -27,6 +27,27 @@ const HostScreen = ({ onBack, onStart, nickname, lobby }: HostScreenProps) => {
         return initialSettings;
     });
 
+    useEffect(() => {
+        const modeSettings = GAME_MODES[gameMode as keyof typeof GAME_MODES].settings;
+
+        if ('recDuration' in modeSettings && settings.recDuration >= settings.roundDuration) {
+
+            const recConfig = (modeSettings as any).recDuration;
+            const recOptions = recConfig.options;
+
+            const validOption = [...recOptions]
+                .reverse()
+                .find((opt: number) => opt < settings.roundDuration);
+
+            if (validOption !== undefined) {
+                setSettings(prev => ({
+                    ...prev,
+                    recDuration: validOption
+                }));
+            }
+        }
+    }, [settings.roundDuration, gameMode]);
+
     const handleModeChange = (modeKey: string) => {
         setGameMode(modeKey);
         // Reset settings to the new mode's defaults
@@ -53,15 +74,28 @@ const HostScreen = ({ onBack, onStart, nickname, lobby }: HostScreenProps) => {
                     <div key={key} className={styles['setting-row']}>
                         <span className={styles['setting-label']}>{config.label}</span>
                         <div className={styles['pill-group']}>
-                            {config.options.map((opt: any) => (
-                                <button
-                                    key={opt}
-                                    className={`${styles['pill-btn']} ${currentValue === opt ? styles['active'] : ''}`}
-                                    onClick={() => setSettings({ ...settings, [key]: opt })}
-                                >
-                                    {opt}{typeof opt === 'number' ? 's' : ''}
-                                </button>
-                            ))}
+                            {config.options.map((opt: any) => {
+                                // Logic: Disable recDuration options >= roundDuration
+                                const isDisabled =
+                                    key === 'recDuration' &&
+                                    typeof opt === 'number' &&
+                                    settings['roundDuration'] !== undefined && // Safety check
+                                    opt >= settings['roundDuration'];
+
+                                return (
+                                    <button
+                                        key={opt}
+                                        disabled={isDisabled}
+                                        className={`${styles['pill-btn']} 
+                                        ${currentValue === opt ? styles['active'] : ''} 
+                                        ${isDisabled ? styles['disabled-pill'] : ''}`
+                                        }
+                                        onClick={() => setSettings({ ...settings, [key]: opt })}
+                                    >
+                                        {opt}{typeof opt === 'number' ? 's' : ''}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
                 );
@@ -71,7 +105,7 @@ const HostScreen = ({ onBack, onStart, nickname, lobby }: HostScreenProps) => {
                     <div key={key} className={styles['setting-row-column']}>
                         <div className={styles['label-header']}>
                             <span className={styles['setting-label']}>{config.label}</span>
-                            <span className={styles['helper-text']}>Items seperated by comma</span>
+                            <span className={styles['helper-text']}>Items separated by comma</span>
                         </div>
                         <textarea
                             className={styles['list-textarea']}
@@ -180,8 +214,6 @@ const HostScreen = ({ onBack, onStart, nickname, lobby }: HostScreenProps) => {
                         ) : (
                             <div className={styles['options-container']}>
                                 <div className={styles['settings-scroll-area']}>
-                                    {/* 1. Get the settings for the current mode */}
-                                    {/* 2. Map through them (Key is the ID, Config is the data) */}
                                     {Object.entries(GAME_MODES[gameMode as keyof typeof GAME_MODES].settings).map(
                                         ([key, config]) => renderSetting(key, config)
                                     )}

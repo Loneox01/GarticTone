@@ -178,3 +178,96 @@
     background: #f1c40f;
     color: #2c3e50;
 }
+
+/* Game Mode Area */
+
+.modes-container {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    padding: 20px;
+}
+
+.mode-card {
+    position: relative;
+    width: 220px;
+    height: 260px;
+    background: #1a1a1a;
+    border: 2px solid #333;
+    border-radius: 16px;
+    overflow: hidden;
+    /* Clips the description overlay */
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+}
+
+.mode-visual-area {
+    position: relative;
+    height: 180px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mode-icon {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.mode-description-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.85);
+    /* Darken to make text readable */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    opacity: 0;
+    /* Hidden by default */
+    transition: opacity 0.3s ease;
+}
+
+.mode-description-overlay p {
+    font-size: 0.9rem;
+    color: #eee;
+    margin: 0;
+}
+
+/* THE HOVER LOGIC */
+.mode-card:hover .mode-description-overlay {
+    opacity: 1;
+}
+
+.mode-card:hover .mode-icon {
+    opacity: 0.2;
+    /* Dim the icon slightly behind the text */
+    transform: scale(0.9);
+}
+
+.mode-footer {
+    padding: 15px;
+    background: #222;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+.mode-footer h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: white;
+}
+
+.icon-placeholder {
+    width: 80px;
+    height: 80px;
+    background: #333;
+    border-radius: 50%;
+    border: 2px dashed #555;
+}

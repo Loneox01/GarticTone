@@ -1,6 +1,8 @@
 import Keyboard from "../components/Keyboard.tsx";
 import styles from '../styles/GuestScreen.module.css';
+
 import type { Lobby } from "../types/lobby.ts";
+import { GAME_MODES } from '../types/gameModes.ts';
 
 interface GuestScreenProps {
     nickname: string;
@@ -10,7 +12,7 @@ interface GuestScreenProps {
 
 const GuestScreen = ({ onBack, nickname, lobby }: GuestScreenProps) => {
     return (
-        <div className={styles['game-container']}>
+        <div className={styles['guest-container']}>
             <div className={styles['top-bar']}>
                 <button onClick={() => onBack()} className={styles['btn-back']}>
                     ← Leave
@@ -63,9 +65,28 @@ const GuestScreen = ({ onBack, nickname, lobby }: GuestScreenProps) => {
 
                     <div className={styles['tab-content']}>
                         <div className={styles['modes-container']}>
-                            <h3>Selected Game Mode</h3>
-                            <p>Waiting for the host to choose...</p>
-                            {/* Later, you will map the modes here but with pointer-events: none */}
+                            {Object.entries(GAME_MODES).map(([key, config]) => {
+                                return (
+                                    <div
+                                        key={key}
+                                        className={`${styles['mode-card']}`}
+                                    >
+                                        <div className={styles['mode-visual-area']}>
+                                            <div className={styles['mode-icon']}>
+                                                <div className={styles['icon-placeholder']} />
+                                            </div>
+
+                                            <div className={styles['mode-description-overlay']}>
+                                                <p>{config.description}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className={styles['mode-footer']}>
+                                            <h3>{config.label}</h3>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>
