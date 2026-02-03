@@ -3,6 +3,8 @@
     text-align: center;
 }
 
+/* TOP BAR */
+
 .top-bar {
     display: flex;
     justify-content: space-between;
@@ -53,7 +55,7 @@
     letter-spacing: 1px;
 }
 
-/* TOP BAR END */
+/* END */
 
 .main-content {
     display: flex;
@@ -64,61 +66,82 @@
     /* Keeps containers from stretching weirdly */
 }
 
-.player-sidebar {
-    flex: 0 0 40%;
-    /* Fixed at 40%, won't grow or shrink */
-}
+/* SIDEBAR LEFT */
 
-.settings-panel {
-    flex: 1;
-    /* Takes up the remaining 60% */
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 12px;
+.sidebar-content {
     display: flex;
     flex-direction: column;
-    min-height: 300px;
-    border: 1px solid #444;
+    justify-content: space-between;
+    /* Pushes content to top and bottom */
+    height: 100%;
+    gap: 20px;
 }
 
-/* Tab Navigation */
-.tab-header {
+.player-sidebar {
+    flex: 0 0 40%;
+    height: 400px;
     display: flex;
-    border-bottom: 1px solid #444;
-}
-
-.tab-btn {
-    flex: 1;
-    padding: 15px;
-    background: transparent;
-    border: none;
-    color: #888;
-    cursor: pointer;
-    font-weight: bold;
-    transition: 0.2s;
-}
-
-.tab-btn.active {
-    color: #27ae60;
-    border-bottom: 3px solid #27ae60;
-    background: rgba(39, 174, 96, 0.05);
-}
-
-.tab-content {
-    padding: 20px;
-    text-align: left;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .player-box-list {
     background: #2c3e50;
     border-radius: 10px;
-    padding: 10px;
-    max-height: 200px;
-    /* Limits height */
+    padding: 15px;
+    flex: 1;
+    /* Takes up remaining space in the 400px sidebar */
     overflow-y: auto;
-    /* Adds scrollbar if too many players */
+    /* Triggers the scrollbar when content overflows */
     display: flex;
     flex-direction: column;
     gap: 8px;
+    border: 1px solid #444;
+}
+
+/* Custom Scrollbar for Player List */
+.player-box-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.player-box-list::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+.player-box-list::-webkit-scrollbar-thumb {
+    background: #4c6987;
+    /* Matches your info-bar color */
+    border-radius: 10px;
+}
+
+.player-box-list::-webkit-scrollbar-thumb:hover {
+    background: #3498db;
+    /* Highlights when hovering */
+}
+
+.btn-start {
+    width: 100%;
+    padding: 18px;
+    background-color: #258a4f;
+    color: rgb(222, 221, 221);
+    border: none;
+    border-radius: 12px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    text-transform: uppercase;
+    /* The button now naturally sits right below the 400px box */
+}
+
+.btn-start:hover {
+    background-color: #2ba55e;
+    transform: translateY(-2px);
+}
+
+.btn-start:active {
+    transform: translateY(2px);
+    box-shadow: 0 0 0 #1e8449;
 }
 
 .player-tag {
@@ -160,3 +183,286 @@
     background: #f1c40f;
     color: #2c3e50;
 }
+
+/* END */
+
+/* GAME MODE SELECTION */
+
+.settings-panel {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    /* This must match the sidebar to keep the UI aligned */
+    height: 400px;
+    border: 1px solid #444;
+    overflow: hidden;
+    /* Prevents the 'spill' */
+}
+
+/* Tab Navigation */
+.tab-header {
+    display: flex;
+    border-bottom: 1px solid #444;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 15px;
+    background: transparent;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.2s;
+}
+
+.tab-btn.active {
+    color: #27ae60;
+    border-bottom: 3px solid #27ae60;
+    background: rgba(39, 174, 96, 0.05);
+}
+
+.tab-content {
+    /* flex: 1 tells this area to take up all space not used by the header */
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    /* Crucial: stops the tab-content from growing */
+    padding: 0;
+    /* Move padding to the scroll area for better scrolling aesthetics */
+}
+
+.modes-container {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    padding: 20px;
+}
+
+.mode-card {
+    position: relative;
+    width: 220px;
+    height: 260px;
+    background: #1a1a1a;
+    border: 2px solid #333;
+    border-radius: 16px;
+    overflow: hidden;
+    /* Clips the description overlay */
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+}
+
+.mode-card.active {
+    border-color: #646cff;
+    background: #242424;
+}
+
+/* Container for the Icon vs Description swap */
+.mode-visual-area {
+    position: relative;
+    height: 180px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mode-icon {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.mode-description-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.85);
+    /* Darken to make text readable */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    opacity: 0;
+    /* Hidden by default */
+    transition: opacity 0.3s ease;
+}
+
+.mode-description-overlay p {
+    font-size: 0.9rem;
+    color: #eee;
+    margin: 0;
+}
+
+/* THE HOVER LOGIC */
+.mode-card:hover .mode-description-overlay {
+    opacity: 1;
+}
+
+.mode-card:hover .mode-icon {
+    opacity: 0.2;
+    /* Dim the icon slightly behind the text */
+    transform: scale(0.9);
+}
+
+.mode-footer {
+    padding: 15px;
+    background: #222;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+.mode-footer h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: white;
+}
+
+.active-dot {
+    width: 8px;
+    height: 8px;
+    background: #646cff;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #646cff;
+}
+
+/* Placeholder for the mode icons until you have assets */
+.icon-placeholder {
+    width: 80px;
+    height: 80px;
+    background: #333;
+    border-radius: 50%;
+    border: 2px dashed #555;
+}
+
+/* END */
+
+/* SETTINGS */
+
+/* 1. The Container for all settings */
+/* This is the outer box */
+.options-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    /* Fill the tab-content completely */
+}
+
+.settings-scroll-area {
+    padding: 20px;
+    flex: 1;
+    overflow-y: auto;
+    /* Now it has a fixed-height parent, so it WILL scroll */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Optional: Make the scrollbar look "gamey" and thin */
+.settings-scroll-area::-webkit-scrollbar {
+    width: 6px;
+}
+
+.settings-scroll-area::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 10px;
+}
+
+.settings-scroll-area::-webkit-scrollbar-thumb:hover {
+    background: #27ae60;
+    /* Turns green when you hover/scroll */
+}
+
+/* 2. Standard Setting Row (Label on left, Buttons on right) */
+.setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.setting-label {
+    font-weight: 600;
+    color: #ddd;
+    font-size: 0.95rem;
+}
+
+/* 3. The Pill/Button Groups */
+.pill-group {
+    display: flex;
+    background: #111;
+    padding: 3px;
+    border-radius: 8px;
+    border: 1px solid #333;
+}
+
+.pill-btn {
+    background: transparent;
+    border: none;
+    color: #666;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+.pill-btn:hover {
+    color: #aaa;
+}
+
+.pill-btn.active {
+    background: #27ae60;
+    color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* 4. The Large List (Textarea) Layout */
+.setting-row-column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 15px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.label-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.helper-text {
+    font-size: 0.7rem;
+    color: #555;
+    font-style: italic;
+}
+
+.list-textarea {
+    width: 100%;
+    height: 100px;
+    background: #0a0a0a;
+    border: 1px solid #222;
+    border-radius: 8px;
+    color: #27ae60;
+    /* Matrix Green */
+    padding: 12px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    resize: none;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.list-textarea:focus {
+    border-color: #27ae60;
+}
+
+/* END */
