@@ -1,17 +1,17 @@
-import Keyboard from "../components/Keyboard";
-import styles from '../styles/GameScreen.module.css';
+import Keyboard from "../components/Keyboard.tsx";
+import styles from '../styles/GuestScreen.module.css';
 import type { Player } from "../types/player.ts";
 
-interface GameScreenProps {
+interface GuestScreenProps {
     nickname: string;
     lobbyId: string;
     players: Player[];
     onBack: (nickname: string, lobbyId: string) => void;
 }
 
-const GameScreen = ({ onBack, nickname, lobbyId, players }: GameScreenProps) => {
+const GuestScreen = ({ onBack, nickname, lobbyId, players }: GuestScreenProps) => {
     return (
-        <div className={styles['game-container']}>
+        <div className={styles['guest-container']}>
             <button onClick={() => onBack(nickname, lobbyId)} className={styles['btn-back']}>
                 ← Leave
             </button>
@@ -43,4 +43,4 @@ const GameScreen = ({ onBack, nickname, lobbyId, players }: GameScreenProps) => 
     );
 };
 
-export default GameScreen;
+export default GuestScreen;

@@ -2,7 +2,7 @@ import './App.css'
 import { useState, useEffect } from 'react'
 import { socket } from './services/socket';
 import type { Player } from './types/player.ts';
-import GameScreen from './screens/GameScreen';
+import GuestScreen from './screens/GuestScreen';
 import HomeScreen from './screens/HomeScreen';
 import RecordingScreen from './screens/RecordingScreen';
 
@@ -73,7 +73,7 @@ function App() {
             )}
 
             {view === 'lobby' && (
-                <GameScreen
+                <GuestScreen
                     nickname={nickname}
                     lobbyId={lobbyId}
                     players={players}

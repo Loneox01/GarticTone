@@ -54,13 +54,13 @@ const HomeScreen = ({ onJoin, externalError }: HomeProps) => {
             <div className={styles['home-content']}>
                 <input
                     // NICKNAME INPUT BAR            
-                    className={`${styles['game-input']} ${isShaking && nnError ? styles['error-shake'] : ''}`} placeholder={placeholderNN}
+                    className={`${styles['guest-input']} ${isShaking && nnError ? styles['error-shake'] : ''}`} placeholder={placeholderNN}
                     value={nickname}
                     onChange={(e) => setNickname(e.target.value)}
                 />
                 <input
                     // LOBBYID INPUT BAR
-                    className={`${styles['game-input']} ${isShaking && lidError ? styles['error-shake'] : ''}`} placeholder={placeholderLID}
+                    className={`${styles['guest-input']} ${isShaking && lidError ? styles['error-shake'] : ''}`} placeholder={placeholderLID}
                     value={lobbyId}
                     onChange={(e) => setLobbyId(e.target.value)}
                 />
