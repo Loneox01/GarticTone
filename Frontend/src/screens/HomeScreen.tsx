@@ -14,8 +14,8 @@ const HomeScreen = ({ onJoin, externalError }: HomeProps) => {
     const [placeholderLID, setPlaceholderLID] = useState('LobbyID');
     const [isShaking, setIsShaking] = useState(false);
 
-    const nnError = externalError === "NICKNAME_TAKEN" || (nickname === '');
-    const lidError = externalError === "LOBBY_NOT_FOUND";
+    const isNicknameError = externalError === "NICKNAME_TAKEN" || (isShaking && nickname === '' && !(externalError === "HOST_DISCONNECT"));
+    const isLobbyError = externalError === "LOBBY_NOT_FOUND" || externalError === "HOST_DISCONNECT";
 
     useEffect(() => {
         if (externalError) {
@@ -32,6 +32,10 @@ const HomeScreen = ({ onJoin, externalError }: HomeProps) => {
                 // input lobbyId not found
                 setLobbyId('');
                 setPlaceholderLID("Lobby not found."); // placeholder
+            }
+            else if (externalError === "HOST_DISCONNECT") {
+                setLobbyId('');
+                setPlaceholderLID("Host closed the lobby.");
             }
         }
     }, [externalError]);
@@ -54,13 +58,15 @@ const HomeScreen = ({ onJoin, externalError }: HomeProps) => {
             <div className={styles['home-content']}>
                 <input
                     // NICKNAME INPUT BAR            
-                    className={`${styles['game-input']} ${isShaking && nnError ? styles['error-shake'] : ''}`} placeholder={placeholderNN}
+                    className={`${styles['game-input']} ${isShaking && isNicknameError ? styles['error-shake'] : ''}`}
+                    placeholder={placeholderNN}
                     value={nickname}
                     onChange={(e) => setNickname(e.target.value)}
                 />
                 <input
                     // LOBBYID INPUT BAR
-                    className={`${styles['game-input']} ${isShaking && lidError ? styles['error-shake'] : ''}`} placeholder={placeholderLID}
+                    className={`${styles['game-input']} ${isShaking && isLobbyError ? styles['error-shake'] : ''}`}
+                    placeholder={placeholderLID}
                     value={lobbyId}
                     onChange={(e) => setLobbyId(e.target.value)}
                 />

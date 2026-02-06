@@ -66,6 +66,13 @@ function App() {
             setScreenIndex(screenIndex + 1);
         });
 
+        socket.on("lobby_dismantled", () => {
+            setNickname('');
+            setError('HOST_DISCONNECT')
+            setView('HOME');
+            setLobby(null);
+        });
+
         return () => {
             socket.off("lobby_joined");
             socket.off("user_left");

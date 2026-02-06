@@ -24,23 +24,7 @@ async def connect(sid, environ):
 
 @sio.event
 async def disconnect(sid):
-    if sid in sid_to_nick:
-        user_data = sid_to_nick[sid]
-        name = user_data["name"]
-        lobby_id = user_data["lobby"]
-
-        # update lobbies
-        updated_lobby = remove_player_from_lobby(lobby_id, name)
-        
-        if(updated_lobby):
-            await sio.emit("user_left", {
-                "user": name,
-                **updated_lobby.model_dump()
-            }, room=lobby_id)
-
-        # update sid_to_nick
-        del sid_to_nick[sid]
-        print(f"Cleaned up {name} after disconnect.")
+    await handle_player_exit(sid)
 
 # ---------------------------------------------
 
@@ -101,10 +85,28 @@ def generate_unique_id():
 # SYNC: LEAVE LOBBY
 @sio.on("leave_lobby")
 async def handle_leave(sid, data):
-    if sid in sid_to_nick:
-        lobby_id = sid_to_nick[sid]["lobby"]
-        await disconnect(sid) 
-        await sio.leave_room(sid, lobby_id)
+    await handle_player_exit(sid)
+
+async def handle_player_exit(sid):
+    if not sid in sid_to_nick:
+        return
+    user_data = sid_to_nick.pop(sid) # clears up sid_to_nick pair
+    name = user_data["name"]
+    lobby_id = user_data["lobby"]
+
+    if lobby_id in lobbies:
+        lobby = lobbies[lobby_id]
+        if not lobby.gameStarted and lobby.lobbyHost == name:
+            # dismantle_lobby
+            await sio.emit("lobby_dismantled", room=lobby_id)
+            del lobbies[lobby_id]
+        else:
+            updated = remove_player_from_lobby(lobby_id, name)
+            if updated:
+                await sio.emit("user_left", {"user": name}, room=lobby_id)
+                
+    await sio.leave_room(sid, lobby_id)
+    print(f"Cleaned up {name} after disconnect.")
 
 # SYNC: START GAME
 
@@ -150,6 +152,7 @@ async def handle_game_init(sid, data):
                 "settings": incoming_settings,
                 "assignedPrompt": p.assigned_prompt  
             }, to=sid)
+    lobby.gameStarted = True
     
     print(f"Game started in lobby {lobby_id} with game mode {mode}")
 

@@ -8,3 +8,4 @@ class Lobby(BaseModel):
     lobbyHost: str
     gameMode: str = "CLASSIC"
     settings: dict = {}
+    gameStarted: bool = False
