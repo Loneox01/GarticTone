@@ -2,6 +2,8 @@ import styles from '../styles/Homescreen.module.css';
 import { useState, useEffect } from 'react'
 import MusicBackground from '../components/DriftingNotes';
 
+import GT_logo from '../assets/GT_logo.png'
+
 interface HomeProps {
     onJoin: (nickname: string, lobbyId: string) => void;
     externalError: string | null;
@@ -56,6 +58,9 @@ const HomeScreen = ({ onJoin, externalError }: HomeProps) => {
         <div className={styles['home-container']}>
             <MusicBackground />
             <div className={styles['home-content']}>
+                {/* Logo */}
+                <img src={GT_logo} alt="Gartic Tone Logo" className={styles['home-logo']} />
+
                 <input
                     // NICKNAME INPUT BAR            
                     className={`${styles['game-input']} ${isShaking && isNicknameError ? styles['error-shake'] : ''}`}

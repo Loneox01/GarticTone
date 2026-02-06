@@ -4,7 +4,10 @@ import Keyboard from "../components/Keyboard";
 import styles from '../styles/HostScreen.module.css';
 
 import { GAME_MODES } from '../types/gameModes.ts';
-import type { Lobby } from "../types/lobby.ts";
+import type { Lobby } from '../types/lobby.ts';
+
+import iconClassic from '../assets/icon_classic.png'
+import iconKaro from '../assets/icon_karo.png'
 
 interface HostScreenProps {
     nickname: string;
@@ -26,6 +29,11 @@ const HostScreen = ({ onBack, onStart, nickname, lobby }: HostScreenProps) => {
 
         return initialSettings;
     });
+
+    const MODE_ICONS: Record<string, string> = {
+        CLASSIC: iconClassic,
+        BLIND_KARAOKE: iconKaro,
+    };
 
     useEffect(() => {
         const modeSettings = GAME_MODES[gameMode as keyof typeof GAME_MODES].settings;
@@ -190,10 +198,13 @@ const HostScreen = ({ onBack, onStart, nickname, lobby }: HostScreenProps) => {
                                             onClick={() => handleModeChange(key)}
                                         >
                                             <div className={styles['mode-visual-area']}>
-                                                {/* Icon, to be added */}
+                                                {/* Icon */}
                                                 <div className={styles['mode-icon']}>
-                                                    {/* Placeholder for your assets later */}
-                                                    <div className={styles['icon-placeholder']} />
+                                                    <img
+                                                        src={MODE_ICONS[key]}
+                                                        alt={`${config.label} icon`}
+                                                        className={styles['mode-img']}
+                                                    />
                                                 </div>
 
                                                 {/* Description (Visible on hover) */}

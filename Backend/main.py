@@ -103,7 +103,7 @@ async def handle_player_exit(sid):
         else:
             updated = remove_player_from_lobby(lobby_id, name)
             if updated:
-                await sio.emit("user_left", {"user": name}, room=lobby_id)
+                await sio.emit("user_left", {"players": lobby.players}, room=lobby_id)
                 
     await sio.leave_room(sid, lobby_id)
     print(f"Cleaned up {name} after disconnect.")

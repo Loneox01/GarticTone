@@ -32,8 +32,19 @@ function App() {
             });
         });
 
-        socket.on("user_left", (data: Lobby) => {
-            setLobby(data);
+        socket.on("user_left", (data: { leaver: string }) => {
+            setLobby(prevLobby => {
+                if (!prevLobby) return null;
+
+                const updatedPlayers = { ...prevLobby.players };
+
+                delete updatedPlayers[data.leaver];
+
+                return {
+                    ...prevLobby,
+                    players: updatedPlayers
+                };
+            });
         });
 
         socket.on("join_error", (data) => {

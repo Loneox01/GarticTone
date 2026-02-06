@@ -122,7 +122,7 @@
 .btn-start {
     width: 100%;
     padding: 18px;
-    background-color: #258a4f;
+    background-color: #279455;
     color: rgb(222, 221, 221);
     border: none;
     border-radius: 12px;
@@ -234,6 +234,32 @@
     gap: 20px;
     justify-content: center;
     padding: 20px;
+}
+
+.mode-icon {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mode-img {
+    width: 70%;
+    height: auto;
+    object-fit: contain;
+
+    /* FILTER TURNS BLACK TO -> OUTPUT COLOR */
+    filter: invert(72%) sepia(85%) saturate(1500%) hue-rotate(110deg) brightness(60%) contrast(105%);
+
+    transition: transform 0.2s ease;
+}
+
+.active .mode-img {
+    transform: scale(1.1);
+
+    /* FILTER TURNS BLACK TO -> OUTPUT COLOR */
+    filter: invert(72%) sepia(85%) saturate(1500%) hue-rotate(110deg) brightness(90%) contrast(105%);
 }
 
 .mode-card {

@@ -4,6 +4,9 @@ import styles from '../styles/GuestScreen.module.css';
 import type { Lobby } from "../types/lobby.ts";
 import { GAME_MODES } from '../types/gameModes.ts';
 
+import iconClassic from '../assets/icon_classic.png'
+import iconKaro from '../assets/icon_karo.png'
+
 interface GuestScreenProps {
     nickname: string;
     lobby: Lobby;
@@ -11,6 +14,11 @@ interface GuestScreenProps {
 }
 
 const GuestScreen = ({ onBack, nickname, lobby }: GuestScreenProps) => {
+    const MODE_ICONS: Record<string, string> = {
+        CLASSIC: iconClassic,
+        BLIND_KARAOKE: iconKaro,
+    };
+
     return (
         <div className={styles['guest-container']}>
             <div className={styles['top-bar']}>
@@ -67,24 +75,29 @@ const GuestScreen = ({ onBack, nickname, lobby }: GuestScreenProps) => {
                         <div className={styles['modes-container']}>
                             {Object.entries(GAME_MODES).map(([key, config]) => {
                                 return (
-                                    <div
+                                    <button
                                         key={key}
                                         className={`${styles['mode-card']}`}
                                     >
                                         <div className={styles['mode-visual-area']}>
+                                            {/* Icon */}
                                             <div className={styles['mode-icon']}>
-                                                <div className={styles['icon-placeholder']} />
+                                                <img
+                                                    src={MODE_ICONS[key]}
+                                                    alt={`${config.label} icon`}
+                                                    className={styles['mode-img']}
+                                                />
                                             </div>
 
+                                            {/* Description (Visible on hover) */}
                                             <div className={styles['mode-description-overlay']}>
                                                 <p>{config.description}</p>
                                             </div>
                                         </div>
 
                                         <div className={styles['mode-footer']}>
-                                            <h3>{config.label}</h3>
-                                        </div>
-                                    </div>
+                                            <h3>{config.label}</h3>                                        </div>
+                                    </button>
                                 );
                             })}
                         </div>

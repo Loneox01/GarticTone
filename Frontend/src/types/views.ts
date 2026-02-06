@@ -14,7 +14,7 @@ export const GAME_FLOWS = {
         GAME_VIEWS.PROMPT,
         GAME_VIEWS.RECORDING
     ],
-    BLIND_KARAOKE: [GAME_VIEWS.RECORDING]
+    BLIND_KARAOKE: [GAME_VIEWS.HOME]
 } as const;
 
 export type GameFlows = keyof typeof GAME_FLOWS;
