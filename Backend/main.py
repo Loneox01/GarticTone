@@ -4,12 +4,13 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from schemas.player import Player
 from schemas.lobby import Lobby
+from schemas.gameModes import MODE_CONFIGS
 
 import random
 import string
 
-lobbies : dict[str, Lobby] = {}
-sid_to_nick = {}
+lobbies : dict[str, Lobby] = {} # lobbyId / Lobby
+sid_to_nick = {} # sid / {"name": nickname, "lobby": lobbyId}
 NUM_CHAR_LID = 6
 
 sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins="*")
@@ -105,6 +106,53 @@ async def handle_leave(sid, data):
         await disconnect(sid) 
         await sio.leave_room(sid, lobby_id)
 
+# SYNC: START GAME
+
+@sio.on("game_init") 
+async def handle_game_init(sid, data):
+    lobby_id = data.get("lobbyId")
+    
+    if not lobby_id or lobby_id not in lobbies:
+        print(f"\n Game Start Error: Lobby {lobby_id} not found \n")
+        return
+        
+    lobby = lobbies[lobby_id]
+    incoming_settings = data.get("settings", {})
+    mode = data.get("gameMode")
+
+    # update server data
+    lobby.settings = incoming_settings
+    lobby.gameMode = mode
+
+    # init proper input list
+    if MODE_CONFIGS[mode]["input_list"]:
+        input_list = lobby.settings.get("inputList")
+
+        user_list = [s.strip() for s in input_list.split(',') if s.strip()]
+        if len(user_list) < len(lobby.players):
+            final_list = MODE_CONFIGS[mode]["default_list"]
+        else:
+            final_list = user_list
+
+        selected_prompts = random.sample(final_list, len(lobby.players))
+        for player, prompt in zip(lobby.players.values(), selected_prompts):
+            player.assigned_prompt = prompt
+
+    # broadcast to room
+    for sid, session_data in sid_to_nick.items():
+        target_nick = session_data.get("name")
+        
+        p = lobby.players.get(target_nick)
+                
+        if p:
+            await sio.emit("game_start", {
+                "gameMode": mode,
+                "settings": incoming_settings,
+                "assignedPrompt": p.assigned_prompt  
+            }, to=sid)
+    
+    print(f"Game started in lobby {lobby_id} with game mode {mode}")
+
 # ---------------------------------------------
 
 # SYNC: ACTIVE LOBBY
@@ -123,16 +171,8 @@ def remove_player_from_lobby(lobby_id, username):
     
     return None
 
-# ---------------------------------------------
 
-# def serialize_players(players: dict[str, Player]):
-#     """Serialize player dictionary to send to frontend"""
-#     return [p.model_dump() for p in players.values()]
-
-# ---------------------------------------------
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:socket_app", host="0.0.0.0", port=8000, reload=True)
-
-

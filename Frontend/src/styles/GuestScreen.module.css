@@ -181,12 +181,6 @@
 
 /* Game Mode Area */
 
-.modes-container {
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-    padding: 20px;
-}
 
 .mode-card {
     position: relative;

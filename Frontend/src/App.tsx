@@ -3,19 +3,22 @@ import { useState, useEffect } from 'react'
 import { socket } from './services/socket';
 
 import type { Lobby } from "./types/lobby.ts";
-import type { GameView } from './types/views.ts';
+import { GAME_FLOWS, type GameViews } from './types/views.ts';
 
 import GuestScreen from './screens/GuestScreen';
 import HomeScreen from './screens/HomeScreen';
 import RecordingScreen from './screens/RecordingScreen';
 import HostScreen from './screens/HostScreen.tsx';
+import PromptScreen from './screens/PromptScreen.tsx';
 
 function App() {
 
-    const [view, setView] = useState<GameView>('HOME');
+    const [view, setView] = useState<GameViews>('HOME');
     const [nickname, setNickname] = useState('');
     const [lobby, setLobby] = useState<Lobby | null>(null);;
     const [error, setError] = useState<string | null>(null);
+    const [screenIndex, setScreenIndex] = useState(0); // refer to GAME_FLOWS
+    const [ownPrompt, setOwnPrompt] = useState<string | null>(null);
 
     // frontend PASSIVE LISTENER
     useEffect(() => {
@@ -35,6 +38,32 @@ function App() {
 
         socket.on("join_error", (data) => {
             setError(data.message);
+        });
+
+        // SYNC: START GAME
+        socket.on("game_start", (data: {
+            gameMode: string,
+            settings: Record<string, any>,
+            assignedPrompt: string | null
+        }) => {
+            setLobby(prevLobby => {
+                if (!prevLobby) return null;
+
+                return {
+                    ...prevLobby,
+                    gameMode: data.gameMode,
+                    settings: {
+                        ...data.settings,
+                        inputList: "" // clear it out, no longer used
+                    }
+                };
+            });
+            setOwnPrompt(data.assignedPrompt);
+
+            const mode = data.gameMode as keyof typeof GAME_FLOWS;
+            setView(GAME_FLOWS[mode][screenIndex]);
+
+            setScreenIndex(screenIndex + 1);
         });
 
         return () => {
@@ -72,6 +101,27 @@ function App() {
         setLobby(null);
     };
 
+    const setNextScreen = () => {
+        if (!lobby || !lobby.gameMode) return;
+
+        const mode = lobby.gameMode as keyof typeof GAME_FLOWS;
+
+        const currentFlow = GAME_FLOWS[mode];
+        if (currentFlow && currentFlow[screenIndex]) {
+            setView(currentFlow[screenIndex]);
+            setScreenIndex(prev => prev + 1);
+        }
+    }
+
+    // SYNC: START GAME
+    const initGame = (mode: string, settings: Record<string, any>) => {
+        socket.emit("game_init", {
+            lobbyId: lobby?.lobbyId,
+            gameMode: mode,
+            settings: settings
+        });
+    }
+
     return (
         <div className="app-main">
             {view === 'HOME' && (
@@ -86,23 +136,38 @@ function App() {
                 />
             )}
 
-            {view === 'RECORDING' && lobby && (
-                <RecordingScreen
-                    nickname={nickname}
-                    lobby={lobby}
-                    recDuration={10}
-                    roundDuration={15}
-                    onBack={() => goToHome()}
-                />
-            )}
-
             {view === 'HOSTLOBBY' && lobby && (
                 <HostScreen
                     nickname={nickname}
                     lobby={lobby}
                     onBack={() => goToHome()}
+                    onStart={(mode, settings) => {
+                        lobby.gameMode = mode;
+                        lobby.settings = settings;
+                        initGame(mode, settings);
+                    }}
                 />
             )}
+
+            {view === 'PROMPT' && lobby && (
+                <PromptScreen
+                    nickname={nickname}
+                    lobby={lobby}
+                    prompt={ownPrompt || ""}
+                    onBack={() => goToHome()}
+                    onNext={() => setNextScreen()}
+                />
+            )}
+
+            {view === 'RECORDING' && lobby && (
+                <RecordingScreen
+                    nickname={nickname}
+                    lobby={lobby}
+                    onBack={() => goToHome()}
+                />
+            )}
+
+
         </div>
     );
 

@@ -1,0 +1,118 @@
+.prompt-container {
+    padding: 20px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #0f172a;
+    /* Deep black for focus */
+    color: white;
+}
+
+/* TOP BAR */
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.btn-back {
+    padding: 10px 20px;
+    font-size: 1.0rem;
+    color: #ff4444;
+    border: 1px solid #ff4444;
+    background: transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.info-bar {
+    display: flex;
+    gap: 15px;
+    padding: 10px;
+    background-color: #202d3a;
+    color: white;
+    border-radius: 8px;
+    border: 2px solid rgb(8, 43, 44);
+}
+
+.info-box {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    white-space: nowrap;
+}
+
+.info-box span {
+    font-size: 0.8rem;
+    color: #bdc3c7;
+    margin-right: 8px;
+}
+
+.info-box strong {
+    color: #27ae60;
+    letter-spacing: 1px;
+}
+
+/* END */
+
+/* MAIN CONTENT (i.e. prompt) */
+
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    text-align: center;
+}
+
+.briefing-header {
+    margin-bottom: 2rem;
+}
+
+.subtitle {
+    color: #ef4444d6;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.prompt-display {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 4rem 2rem;
+    width: 100%;
+    max-width: 800px;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+}
+
+.prompt-text {
+    font-size: clamp(2rem, 8vw, 4rem);
+    margin: 0;
+    color: #9cb7c8;
+    text-transform: uppercase;
+    letter-spacing: -1px;
+}
+
+.instruction-text {
+    margin-top: 2rem;
+    color: #888;
+    font-style: italic;
+}
+
+.progress-bar {
+    height: 100%;
+    background: #3498db;
+    transition: width 1s linear;
+    /* shrinking animation */
+}

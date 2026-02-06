@@ -111,7 +111,6 @@
 
 .player-box-list::-webkit-scrollbar-thumb {
     background: #4c6987;
-    /* Matches your info-bar color */
     border-radius: 10px;
 }
 
@@ -131,7 +130,6 @@
     font-weight: bold;
     cursor: pointer;
     text-transform: uppercase;
-    /* The button now naturally sits right below the 400px box */
 }
 
 .btn-start:hover {
@@ -194,7 +192,6 @@
     border-radius: 12px;
     display: flex;
     flex-direction: column;
-    /* This must match the sidebar to keep the UI aligned */
     height: 400px;
     border: 1px solid #444;
     overflow: hidden;
@@ -225,14 +222,11 @@
 }
 
 .tab-content {
-    /* flex: 1 tells this area to take up all space not used by the header */
     flex: 1;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    /* Crucial: stops the tab-content from growing */
     padding: 0;
-    /* Move padding to the scroll area for better scrolling aesthetics */
 }
 
 .modes-container {
@@ -332,7 +326,7 @@
     box-shadow: 0 0 8px #646cff;
 }
 
-/* Placeholder for the mode icons until you have assets */
+/* temp icon placeholder */
 .icon-placeholder {
     width: 80px;
     height: 80px;
@@ -345,25 +339,21 @@
 
 /* SETTINGS */
 
-/* 1. The Container for all settings */
-/* This is the outer box */
+/* 1.Container for all settings */
 .options-container {
     display: flex;
     flex-direction: column;
     height: 100%;
-    /* Fill the tab-content completely */
 }
 
 .settings-scroll-area {
     padding: 20px;
     flex: 1;
     overflow-y: auto;
-    /* Now it has a fixed-height parent, so it WILL scroll */
     display: flex;
     flex-direction: column;
 }
 
-/* Optional: Make the scrollbar look "gamey" and thin */
 .settings-scroll-area::-webkit-scrollbar {
     width: 6px;
 }
@@ -378,7 +368,7 @@
     /* Turns green when you hover/scroll */
 }
 
-/* 2. Standard Setting Row (Label on left, Buttons on right) */
+/* Standard Setting Row (Label on left, Buttons on right) */
 .setting-row {
     display: flex;
     justify-content: space-between;
@@ -465,7 +455,6 @@
     border: 1px solid #222;
     border-radius: 8px;
     color: #27ae60;
-    /* Matrix Green */
     padding: 12px;
     font-family: 'Courier New', monospace;
     font-size: 0.85rem;

@@ -10,18 +10,19 @@ import styles from '../styles/RecordingScreen.module.css';
 interface RecordingScreenProps {
     nickname: string;
     lobby: Lobby;
-    recDuration: number;
-    roundDuration: number;
     onBack: () => void;
 }
 
-const RecordingScreen = ({ nickname, lobby, recDuration, roundDuration, onBack }: RecordingScreenProps) => {
+const RecordingScreen = ({ nickname, lobby, onBack }: RecordingScreenProps) => {
+    const recDuration = lobby.settings.recDuration;
+    const roundDuration = lobby.settings.roundDuration;
+
     const [isRecording, setIsRecording] = useState(false);
     const [recording, setRecording] = useState<{ type: 'on' | 'off', note: string, time: number }[]>([]);
 
     // ui states
-    const [recTimeLeft, setRecTimeLeft] = useState(recDuration);
-    const [roundTimeLeft, setRoundTimeLeft] = useState(roundDuration);
+    const [recTimeLeft, setRecTimeLeft] = useState<number>(recDuration);
+    const [roundTimeLeft, setRoundTimeLeft] = useState<number>(roundDuration);
     const [isPlayback, setIsPlayback] = useState(false);
 
     // refs
@@ -147,18 +148,18 @@ const RecordingScreen = ({ nickname, lobby, recDuration, roundDuration, onBack }
 
     return (
         <div className={styles['screen-container']}>
-            { /* leave + timers */}
+            {/* 1. TOP BAR: Global Info (Quiet/Static) */}
             <div className={styles['top-bar']}>
                 <div className={styles['left-section']}>
-                    <button onClick={() => onBack()} className={styles['btn-back']}>
-                        <span className={styles['icon']}>← </span>
-                        <span className={styles['text']}>Leave</span>
-                    </button>
+                    <button onClick={onBack} className={styles['btn-back']}>← Leave</button>
                 </div>
 
-                <div className={styles['middle-section']}>
-                    <div className={`${styles['timer']} ${isRecording ? styles['active'] : ''}`}>
-                        {recTimeLeft.toFixed(1)}s
+                <div className={styles['info-cluster']}>
+                    <div className={styles['info-box']}>
+                        <span>PLAYER:</span> <strong>{nickname}</strong>
+                    </div>
+                    <div className={styles['info-box']}>
+                        <span>LOBBY:</span> <strong>{lobby.lobbyId}</strong>
                     </div>
                 </div>
 
@@ -171,29 +172,37 @@ const RecordingScreen = ({ nickname, lobby, recDuration, roundDuration, onBack }
                     </div>
                 </div>
             </div>
-            { /* buttons */}
-            <div className={styles['controls']}>
-                <button
-                    onClick={toggleRecording}
-                    className={`${styles['btn-rec']} ${isRecording ? styles['recording'] : ''}`}
-                    disabled={isPlayback} // disable record if playing back
-                >
-                    {isRecording ? "Stop" : "Record"}
-                </button>
 
-                <button
-                    onClick={playBack}
-                    disabled={isRecording || recording.length === 0}
-                    className={`${styles['btn-play']} ${isPlayback ? styles['playing'] : ''}`}
-                >
-                    {isPlayback ? "Stop" : "Play Back"}
-                </button>
+            {/* 2. ACTION BAR: Controls and Timers */}
+            <div className={styles['action-bar']}>
+                <div className={styles['timer-box']}>
+                    <span className={styles['label']}>REC LIMIT</span>
+                    <div className={`${styles['timer']} ${isRecording ? styles['active'] : ''}`}>
+                        {recTimeLeft.toFixed(1)}s
+                    </div>
+                </div>
+
+                <div className={styles['controls']}>
+                    <button
+                        onClick={toggleRecording}
+                        className={`${styles['btn-rec']} ${isRecording ? styles['recording'] : ''}`}
+                        disabled={isPlayback}
+                    >
+                        {isRecording ? "Stop" : "Record"}
+                    </button>
+
+                    <button
+                        onClick={playBack}
+                        disabled={isRecording || recording.length === 0}
+                        className={`${styles['btn-play']} ${isPlayback ? styles['playing'] : ''}`}
+                    >
+                        {isPlayback ? "Stop" : "Play Back"}
+                    </button>
+                </div>
             </div>
 
-            <Keyboard
-                onPlayNote={handleNoteStart}
-                onStopNote={handleNoteStop}
-            />
+            {/* 3. KEYBOARD: The Play Area */}
+            <Keyboard onPlayNote={handleNoteStart} onStopNote={handleNoteStop} />
         </div>
     );
 }

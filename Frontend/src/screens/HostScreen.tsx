@@ -59,12 +59,11 @@ const HostScreen = ({ onBack, onStart, nickname, lobby }: HostScreenProps) => {
     };
 
     const handleStart = () => {
-        // Pass the final "locked in" settings up to App.tsx
+        // pass final settings
         onStart(gameMode, settings);
     };
 
     const renderSetting = (key: string, config: any) => {
-        // This looks at your local 'settings' state to see what is currently picked
         const currentValue = settings[key];
 
         switch (config.type) {
@@ -75,11 +74,11 @@ const HostScreen = ({ onBack, onStart, nickname, lobby }: HostScreenProps) => {
                         <span className={styles['setting-label']}>{config.label}</span>
                         <div className={styles['pill-group']}>
                             {config.options.map((opt: any) => {
-                                // Logic: Disable recDuration options >= roundDuration
+                                // disables recDuration options >= roundDuration
                                 const isDisabled =
                                     key === 'recDuration' &&
                                     typeof opt === 'number' &&
-                                    settings['roundDuration'] !== undefined && // Safety check
+                                    settings['roundDuration'] !== undefined &&
                                     opt >= settings['roundDuration'];
 
                                 return (
@@ -191,13 +190,13 @@ const HostScreen = ({ onBack, onStart, nickname, lobby }: HostScreenProps) => {
                                             onClick={() => handleModeChange(key)}
                                         >
                                             <div className={styles['mode-visual-area']}>
-                                                {/* The Icon (Visible by default) */}
+                                                {/* Icon, to be added */}
                                                 <div className={styles['mode-icon']}>
                                                     {/* Placeholder for your assets later */}
                                                     <div className={styles['icon-placeholder']} />
                                                 </div>
 
-                                                {/* The Description (Visible on hover) */}
+                                                {/* Description (Visible on hover) */}
                                                 <div className={styles['mode-description-overlay']}>
                                                     <p>{config.description}</p>
                                                 </div>
