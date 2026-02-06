@@ -11,9 +11,10 @@ interface RecordingScreenProps {
     nickname: string;
     lobby: Lobby;
     onBack: () => void;
+    onNext: (recordingData: { type: 'on' | 'off', note: string, time: number }[]) => void;
 }
 
-const RecordingScreen = ({ nickname, lobby, onBack }: RecordingScreenProps) => {
+const RecordingScreen = ({ nickname, lobby, onBack, onNext }: RecordingScreenProps) => {
     const recDuration = lobby.settings.recDuration;
     const roundDuration = lobby.settings.roundDuration;
 
@@ -24,6 +25,7 @@ const RecordingScreen = ({ nickname, lobby, onBack }: RecordingScreenProps) => {
     const [recTimeLeft, setRecTimeLeft] = useState<number>(recDuration);
     const [roundTimeLeft, setRoundTimeLeft] = useState<number>(roundDuration);
     const [isPlayback, setIsPlayback] = useState(false);
+    const [isWaiting, setIsWaiting] = useState(false);
 
     // refs
     const playbackTimeoutRef = useRef<number | null>(null);
@@ -36,7 +38,8 @@ const RecordingScreen = ({ nickname, lobby, onBack }: RecordingScreenProps) => {
             setRoundTimeLeft((prev) => {
                 if (prev <= 1) {
                     clearInterval(roundTimer);
-                    // Handle Screen Transfer Here.
+                    setIsWaiting(true);
+                    onNext(recording);
                     return 0;
                 }
                 return prev - 1;
@@ -148,6 +151,31 @@ const RecordingScreen = ({ nickname, lobby, onBack }: RecordingScreenProps) => {
 
     return (
         <div className={styles['screen-container']}>
+            {isWaiting && (
+                <div className={styles['waiting-overlay']}>
+                    <div className={styles['waiting-content']}>
+                        {/* Pulsing Turquoise Icon */}
+                        <div className={styles['spinner-container']}>
+                            <div className={styles['pulse-ring']} />
+                            <div className={styles['music-icon']}>♪</div>
+                        </div>
+
+                        <h2>Waiting for the lobby...</h2>
+
+                        <div className={styles['progress-text']}>
+                            {/* We'll use lobby data to show the count */}
+                            {/* {Object.keys(lobby. || {}).length} / {Object.keys(lobby.players).length} Players Ready */}
+                        </div>
+
+                        <div className={styles['loading-bar-bg']}>
+                            <div
+                                className={styles['loading-bar-fill']}
+                            // style={{ width: `${(Object.keys(lobby.recordings || {}).length / Object.keys(lobby.players).length) * 100}%` }}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
             {/* 1. TOP BAR: Global Info (Quiet/Static) */}
             <div className={styles['top-bar']}>
                 <div className={styles['left-section']}>
@@ -200,9 +228,24 @@ const RecordingScreen = ({ nickname, lobby, onBack }: RecordingScreenProps) => {
                     </button>
                 </div>
             </div>
+            {/* 3. BOTTOM SECTION */}
+            <div className={styles['bottom-section']}>
+                <div className={styles['ready-bar']}>
+                    <button
+                        className={styles['btn-ready']}
+                        disabled={recording.length === 0 || isRecording}
+                        onClick={() => {
+                            setIsWaiting(true);
+                            onNext(recording);
+                        }}
+                    >
+                        Ready! <span>✓</span>
+                    </button>
+                </div>
 
-            {/* 3. KEYBOARD: The Play Area */}
-            <Keyboard onPlayNote={handleNoteStart} onStopNote={handleNoteStop} />
+                {/* 4. KEYBOARD */}
+                <Keyboard onPlayNote={handleNoteStart} onStopNote={handleNoteStop} />
+            </div>
         </div>
     );
 }

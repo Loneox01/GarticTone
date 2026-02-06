@@ -119,6 +119,13 @@ function App() {
         setLobby(null);
     };
 
+    const passRecording = (recordingData: any[]) => {
+        socket.emit("submit_recording", {
+            nickname: nickname,
+            recording: recordingData
+        });
+    }
+
     const setNextScreen = () => {
         if (!lobby || !lobby.gameMode) return;
 
@@ -182,7 +189,7 @@ function App() {
                     nickname={nickname}
                     lobby={lobby}
                     onBack={() => goToHome()}
-                />
+                    onNext={(recordingData) => passRecording(recordingData)} />
             )}
 
 

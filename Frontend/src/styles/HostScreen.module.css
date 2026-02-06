@@ -1,6 +1,9 @@
 .game-container {
-    padding: 20px;
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    padding: 0;
 }
 
 /* TOP BAR */
@@ -10,7 +13,10 @@
     justify-content: space-between;
     align-items: center;
     width: 100%;
-    margin-bottom: 20px;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 15px;
+    padding-bottom: 5px;
 }
 
 .btn-back {
@@ -58,12 +64,11 @@
 /* END */
 
 .main-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 20px;
     display: flex;
-    gap: 20px;
-    /* The "slight gap" */
-    margin-bottom: 30px;
-    align-items: flex-start;
-    /* Keeps containers from stretching weirdly */
+    gap: 30px;
 }
 
 /* SIDEBAR LEFT */

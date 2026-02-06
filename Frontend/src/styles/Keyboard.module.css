@@ -4,12 +4,8 @@
 
 .keyboard {
     display: flex;
-
-    /* keyboard positioning */
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    flex-shrink: 0;
+    position: relative;
 
     /* height -> 25 %*/
     height: 25vh;
