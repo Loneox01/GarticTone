@@ -1,5 +1,5 @@
 import './App.css'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { socket } from './services/socket';
 
 import type { Lobby } from "./types/lobby.ts";
@@ -10,15 +10,25 @@ import HomeScreen from './screens/HomeScreen';
 import RecordingScreen from './screens/RecordingScreen';
 import HostScreen from './screens/HostScreen.tsx';
 import PromptScreen from './screens/PromptScreen.tsx';
+import ListeningScreen from './screens/ListeningScreen.tsx';
 
 function App() {
 
     const [view, setView] = useState<GameViews>('HOME');
     const [nickname, setNickname] = useState('');
     const [lobby, setLobby] = useState<Lobby | null>(null);;
+    const lobbyRef = useRef<Lobby | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [screenIndex, setScreenIndex] = useState(0); // refer to GAME_FLOWS
     const [ownPrompt, setOwnPrompt] = useState<string | null>(null);
+    const [playersReady, setPlayersReady] = useState({ ready: 0, total: 0 });
+    const [currentRecording, setCurrentRecording] = useState<any[]>([]);
+    const [listeningTime, setListeningTime] = useState<number>(0);
+
+    // lobby ref.
+    useEffect(() => {
+        lobbyRef.current = lobby;
+    }, [lobby]);
 
     // frontend PASSIVE LISTENER
     useEffect(() => {
@@ -71,10 +81,8 @@ function App() {
             });
             setOwnPrompt(data.assignedPrompt);
 
-            const mode = data.gameMode as keyof typeof GAME_FLOWS;
-            setView(GAME_FLOWS[mode][screenIndex]);
-
-            setScreenIndex(screenIndex + 1);
+            setScreenIndex(0);
+            setNextScreen();
         });
 
         socket.on("lobby_dismantled", () => {
@@ -84,10 +92,30 @@ function App() {
             setLobby(null);
         });
 
+        socket.on("update_players_ready", (data: { ready: number, total: number }) => {
+            setPlayersReady(data);
+        });
+
+        socket.on("next_assignment", (data: {
+            nextRec: any[],
+            listeningTime: number
+        }) => {
+            setCurrentRecording(data.nextRec);
+            setListeningTime(data.listeningTime);
+            setNextScreen();
+            setPlayersReady(prev => ({
+                ready: 0,
+                total: prev.total
+            }));
+        });
+
         return () => {
             socket.off("lobby_joined");
             socket.off("user_left");
             socket.off("join_error");
+            socket.off("game_start");
+            socket.off("lobby_dismantled");
+            socket.off("update_players_ready")
         };
     }, []);
 
@@ -119,25 +147,6 @@ function App() {
         setLobby(null);
     };
 
-    const passRecording = (recordingData: any[]) => {
-        socket.emit("submit_recording", {
-            nickname: nickname,
-            recording: recordingData
-        });
-    }
-
-    const setNextScreen = () => {
-        if (!lobby || !lobby.gameMode) return;
-
-        const mode = lobby.gameMode as keyof typeof GAME_FLOWS;
-
-        const currentFlow = GAME_FLOWS[mode];
-        if (currentFlow && currentFlow[screenIndex]) {
-            setView(currentFlow[screenIndex]);
-            setScreenIndex(prev => prev + 1);
-        }
-    }
-
     // SYNC: START GAME
     const initGame = (mode: string, settings: Record<string, any>) => {
         socket.emit("game_init", {
@@ -146,6 +155,33 @@ function App() {
             settings: settings
         });
     }
+
+    // SYNC: LOBBY GAME STARTED
+    const passRecording = (recordingData: any[]) => {
+        socket.emit("submit_recording", {
+            nickname: nickname,
+            recording: recordingData
+        });
+    }
+
+    const setNextScreen = () => {
+        const currentLobby = lobbyRef.current;
+        if (!currentLobby || !currentLobby.gameMode) return;
+
+        const mode = currentLobby.gameMode as keyof typeof GAME_FLOWS;
+        const currentFlow = GAME_FLOWS[mode];
+
+        setScreenIndex((prevIndex) => {
+            const nextIndex = prevIndex + 1;
+            const nextView = currentFlow[prevIndex];
+
+            if (nextView) {
+                setView(nextView);
+                return nextIndex;
+            }
+            return prevIndex;
+        });
+    };
 
     return (
         <div className="app-main">
@@ -188,10 +224,20 @@ function App() {
                 <RecordingScreen
                     nickname={nickname}
                     lobby={lobby}
+                    playersReady={playersReady}
                     onBack={() => goToHome()}
                     onNext={(recordingData) => passRecording(recordingData)} />
             )}
 
+            {view === 'LISTENING' && lobby && (
+                <ListeningScreen
+                    nickname={nickname}
+                    lobby={lobby}
+                    listeningTime={listeningTime}
+                    recording={currentRecording}
+                    onBack={() => goToHome()}
+                    onNext={() => goToHome()} />
+            )}
 
         </div>
     );

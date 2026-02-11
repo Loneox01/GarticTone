@@ -1,6 +1,7 @@
 import socketio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import asyncio
 
 from schemas.player import Player
 from schemas.lobby import Lobby
@@ -9,8 +10,8 @@ from schemas.gameModes import MODE_CONFIGS
 import random
 import string
 
-lobbies : dict[str, Lobby] = {} # lobbyId / Lobby
-sid_to_nick = {} # sid / {"name": nickname, "lobby": lobbyId}
+lobbies : dict[str, Lobby] = {} # lobbyId: Lobby
+sid_to_nick = {} # sid:{"name": nickname, "lobby": lobbyId}
 NUM_CHAR_LID = 6
 
 sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins="*")
@@ -103,10 +104,14 @@ async def handle_player_exit(sid):
         else:
             updated = remove_player_from_lobby(lobby_id, name)
             if updated:
-                await sio.emit("user_left", {"players": lobby.players}, room=lobby_id)
+                await sio.emit("user_left", {"leaver": name}, room=lobby_id)
+                # user_left might be redundant, keep for now
+                handle_advance(lobby_id)
                 
     await sio.leave_room(sid, lobby_id)
     print(f"Cleaned up {name} after disconnect.")
+
+# ---------------------------------------------
 
 # SYNC: START GAME
 
@@ -142,6 +147,8 @@ async def handle_game_init(sid, data):
 
     # broadcast to room
     for sid, session_data in sid_to_nick.items():
+        if session_data.get("lobby") != lobby_id:
+            continue
         target_nick = session_data.get("name")
         
         p = lobby.players.get(target_nick)
@@ -152,7 +159,17 @@ async def handle_game_init(sid, data):
                 "settings": incoming_settings,
                 "assignedPrompt": p.assigned_prompt  
             }, to=sid)
+
+    # update attributes
     lobby.gameStarted = True
+    for i, player in enumerate(lobby.players.values()):
+        player.index = i
+    lobby.recList = [[] for _ in range(len(lobby.players))]
+    lobby.numRounds = min(len(lobby.players), 8)
+
+    # init round force timeout
+    timeout_seconds = lobby.settings.get('roundDuration') + 2
+    asyncio.create_task(force_timeout(lobby.lobbyId, lobby.roundIndex, timeout_seconds))
     
     print(f"Game started in lobby {lobby_id} with game mode {mode}")
 
@@ -174,7 +191,100 @@ def remove_player_from_lobby(lobby_id, username):
     
     return None
 
+# ---------------------------------------------
 
+# SYNC: LOBBY GAME STARTED
+@sio.on("submit_recording") 
+async def handle_recording_submission(sid, data):
+    if sid not in sid_to_nick:
+        return
+    
+    lobby_id = sid_to_nick[sid].get("lobby")
+    if not lobby_id or lobby_id not in lobbies:
+        return
+    
+    lobby = lobbies[lobby_id]  
+    nick = sid_to_nick[sid]["name"]  
+    p = lobby.players[nick]  
+    
+    init_index = p.index
+    increment = lobby.roundNum - 1
+    fin_index = (init_index + increment) % len(lobby.recList)
+    target_chain = lobby.recList[fin_index]
+
+    # find timestamp of the very last note currently in the chain if empty, offset is 0
+    current_duration = max((n['time'] for n in target_chain), default=0)
+
+    # apply offset
+    new_recording = data.get("recording", [])
+    for note in new_recording:
+        note['time'] += current_duration
+
+    # store
+    target_chain.extend(new_recording)
+
+    # handle ready
+    p.ready = True
+    await handle_advance(lobby_id)
+    
+async def handle_advance(lobby_id):
+    lobby = lobbies[lobby_id]
+
+    total_players = len(lobby.players)
+    ready_count = sum(player.ready for player in lobby.players.values())
+
+    if total_players == ready_count:
+        await advance_round(lobby_id)
+    else:
+        await sio.emit('update_players_ready', {
+            'ready': ready_count,
+            'total': total_players
+        }, room=lobby_id)
+
+async def advance_round(lobby_id):
+    lobby = lobbies[lobby_id]
+    if lobby.roundNum >= lobby.numRounds:
+        await advance_to_results(lobby_id)
+        return
+
+    # this should be replaced with more accurate tracking later
+    lobby.roundIndex += 2
+    
+    for sid, session_data in sid_to_nick.items():
+        if session_data.get("lobby") != lobby_id:
+            continue
+        target_nick = session_data.get("name")
+        p = lobby.players.get(target_nick)
+
+        if p:
+            nextRec = lobby.recList[(p.index + lobby.roundNum) % len(lobby.recList)]
+            roundListeningTime = lobby.settings.get("recDuration", 15) * lobby.roundNum + 2
+            await sio.emit("next_assignment", {
+                "nextRec": nextRec,
+                "listeningTime": roundListeningTime
+            }, to=sid)
+    lobby.roundNum += 1
+    for player in lobby.players.values():
+        player.ready = False
+
+
+async def force_timeout(lobby_id, index, seconds):
+    await asyncio.sleep(seconds)
+    if lobby_id not in lobbies:
+        return
+    lobby = lobbies[lobby_id]
+    if lobby.roundIndex == index:
+        # force next stage
+        print(f"Force timeout triggered for {lobby_id}")
+        await advance_round(lobby_id)
+
+async def advance_to_results(lobby_id):
+    lobby = lobbies[lobby_id]
+    await sio.emit('go_to_results', {
+        "recList": lobby.recList
+    }, room=lobby_id)
+
+# ---------------------------------------------
 
 if __name__ == "__main__":
     import uvicorn

@@ -10,11 +10,12 @@ import styles from '../styles/RecordingScreen.module.css';
 interface RecordingScreenProps {
     nickname: string;
     lobby: Lobby;
+    playersReady: { ready: number, total: number };
     onBack: () => void;
     onNext: (recordingData: { type: 'on' | 'off', note: string, time: number }[]) => void;
 }
 
-const RecordingScreen = ({ nickname, lobby, onBack, onNext }: RecordingScreenProps) => {
+const RecordingScreen = ({ nickname, lobby, playersReady, onBack, onNext }: RecordingScreenProps) => {
     const recDuration = lobby.settings.recDuration;
     const roundDuration = lobby.settings.roundDuration;
 
@@ -98,6 +99,7 @@ const RecordingScreen = ({ nickname, lobby, onBack, onNext }: RecordingScreenPro
     };
 
     const playBack = async () => {
+        console.log(recording)
         // this checks for browser allowing audio
         if (getContext().state !== 'running') {
             await start();
@@ -163,15 +165,16 @@ const RecordingScreen = ({ nickname, lobby, onBack, onNext }: RecordingScreenPro
                         <h2>Waiting for the lobby...</h2>
 
                         <div className={styles['progress-text']}>
-                            {/* We'll use lobby data to show the count */}
-                            {/* {Object.keys(lobby. || {}).length} / {Object.keys(lobby.players).length} Players Ready */}
+                            {/* Display player ready count */}
+                            {playersReady.ready} / {playersReady.total} Players Ready
                         </div>
 
                         <div className={styles['loading-bar-bg']}>
                             <div
                                 className={styles['loading-bar-fill']}
-                            // style={{ width: `${(Object.keys(lobby.recordings || {}).length / Object.keys(lobby.players).length) * 100}%` }}
-                            />
+                                style={{
+                                    width: `${playersReady.total > 0 ? (playersReady.ready / playersReady.total) * 100 : 0}%`
+                                }} />
                         </div>
                     </div>
                 </div>

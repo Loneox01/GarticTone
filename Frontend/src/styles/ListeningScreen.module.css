@@ -1,4 +1,4 @@
-.prompt-container {
+.listening-container {
     padding: 20px;
     height: 100vh;
     display: flex;
@@ -86,7 +86,7 @@
     margin: 0;
 }
 
-.prompt-display {
+.listening-display {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 16px;
@@ -96,7 +96,7 @@
     box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
 }
 
-.prompt-text {
+.listening-text {
     font-size: clamp(2rem, 8vw, 4rem);
     margin: 0;
     color: #9cb7c8;
@@ -117,6 +117,7 @@
     border-radius: 3px;
     overflow: hidden;
     margin-top: auto;
+    /* Push to bottom */
 }
 
 .progress-bar {

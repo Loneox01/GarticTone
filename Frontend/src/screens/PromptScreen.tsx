@@ -15,21 +15,20 @@ const PromptScreen = ({ nickname, lobby, prompt, onBack, onNext }: PromptProps) 
     const AUTO_ADVANCE_TIME = 10;
     const [timeLeft, setTimeLeft] = useState(AUTO_ADVANCE_TIME);
 
+    // handles internal timer
     useEffect(() => {
-        // timer countdown
         const timer = setInterval(() => {
-            setTimeLeft((prev) => {
-                if (prev <= 1) {
-                    clearInterval(timer);
-                    onNext(); // auto-advance when hits 0
-                    return 0;
-                }
-                return prev - 1;
-            });
+            setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
         }, 1000);
-
         return () => clearInterval(timer);
-    }, [onNext]);
+    }, []);
+
+    // triggers onNext
+    useEffect(() => {
+        if (timeLeft <= 0) {
+            onNext();
+        }
+    }, [timeLeft, onNext]);
 
     return (
         <div className={styles['prompt-container']}>
