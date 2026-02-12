@@ -11,11 +11,12 @@ interface RecordingScreenProps {
     nickname: string;
     lobby: Lobby;
     playersReady: { ready: number, total: number };
+    prevRecording?: { type: 'on' | 'off', note: string, time: number }[];
     onBack: () => void;
     onNext: (recordingData: { type: 'on' | 'off', note: string, time: number }[]) => void;
 }
 
-const RecordingScreen = ({ nickname, lobby, playersReady, onBack, onNext }: RecordingScreenProps) => {
+const RecordingScreen = ({ nickname, lobby, playersReady, prevRecording, onBack, onNext }: RecordingScreenProps) => {
     const recDuration = lobby.settings.recDuration;
     const roundDuration = lobby.settings.roundDuration;
 
@@ -32,6 +33,26 @@ const RecordingScreen = ({ nickname, lobby, playersReady, onBack, onNext }: Reco
     const playbackTimeoutRef = useRef<number | null>(null);
     const startTimeRef = useRef<number>(0);
     const timerRef = useRef<number | null>(null);
+    const [isRefPlaying, setIsRefPlaying] = useState(false);
+
+    const playReference = async () => {
+        if (!prevRecording || isRefPlaying) return;
+
+        await start();
+        setIsRefPlaying(true);
+        const startTime = now() + 0.1;
+
+        prevRecording.forEach((msg) => {
+            if (msg.type === 'on') {
+                sampler.triggerAttack(msg.note, startTime + msg.time);
+            } else if (msg.type === 'off') {
+                sampler.triggerRelease(msg.note, startTime + msg.time);
+            }
+        });
+
+        const lastEventTime = prevRecording[prevRecording.length - 1]?.time || 0;
+        setTimeout(() => setIsRefPlaying(false), (lastEventTime + 0.5) * 1000);
+    };
 
     // round timer
     useEffect(() => {
@@ -234,6 +255,15 @@ const RecordingScreen = ({ nickname, lobby, playersReady, onBack, onNext }: Reco
             {/* 3. BOTTOM SECTION */}
             <div className={styles['bottom-section']}>
                 <div className={styles['ready-bar']}>
+                    {prevRecording && prevRecording.length > 0 && (
+                        <button
+                            className={styles['btn-ref']}
+                            onClick={playReference}
+                            disabled={isRefPlaying}
+                        >
+                            {isRefPlaying ? "Playing..." : "Play Reference"}
+                        </button>
+                    )}
                     <button
                         className={styles['btn-ready']}
                         disabled={recording.length === 0 || isRecording}

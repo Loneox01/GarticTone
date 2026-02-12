@@ -43,20 +43,23 @@ const ListeningScreen = ({ nickname, lobby, listeningTime, recording, onBack, on
     }, [recording]);
 
     useEffect(() => {
-        // timer countdown
-        const timer = setInterval(() => {
-            setTimeLeft((prev) => {
-                if (prev <= 0) {
-                    clearInterval(timer);
-                    onNext(); // auto-advance when hits 0
-                    return 0;
-                }
-                return prev - 1;
-            });
+        setTimeLeft(AUTO_ADVANCE_TIME);
+
+        const interval = setInterval(() => {
+            setTimeLeft((t) => Math.max(0, t - 1));
         }, 1000);
 
-        return () => clearInterval(timer);
-    }, [onNext]);
+        const timeout = setTimeout(() => {
+            onNext();   // fires once
+        }, AUTO_ADVANCE_TIME * 1000);
+
+        return () => {
+            clearInterval(interval);
+            clearTimeout(timeout);
+        };
+    }, [AUTO_ADVANCE_TIME]);
+
+
 
     return (
         <div className={styles['listening-container']}>

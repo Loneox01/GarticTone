@@ -289,13 +289,43 @@
 
 .ready-bar {
     display: flex;
+    align-items: center;
     justify-content: flex-end;
     width: 100%;
-    padding-right: 5%;
-    padding-bottom: 10px;
-    flex-shrink: 0;
+    padding: 0 5% 10px 5%;
+    box-sizing: border-box;
 }
 
+/* reference button */
+.btn-ref {
+    margin-right: auto;
+    background: transparent;
+    color: #40E0D0;
+    border: 2px solid #40E0D0;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+}
+
+.btn-ref:hover:not(:disabled) {
+    background: rgba(64, 224, 208, 0.1);
+    transform: translateY(-2px);
+}
+
+.btn-ref:disabled {
+    opacity: 0.5;
+    border-color: #555;
+    color: #555;
+}
+
+.btn-ready {
+    margin-bottom: 0;
+}
+
+/* ready button */
 .btn-ready {
     padding: 12px 30px;
     background-color: #40E0D0;

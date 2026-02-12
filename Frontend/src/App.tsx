@@ -25,10 +25,27 @@ function App() {
     const [currentRecording, setCurrentRecording] = useState<any[]>([]);
     const [listeningTime, setListeningTime] = useState<number>(0);
 
+
     // lobby ref.
     useEffect(() => {
         lobbyRef.current = lobby;
     }, [lobby]);
+
+    // screen handler
+    useEffect(() => {
+        const currentLobby = lobbyRef.current;
+        if (!currentLobby?.gameMode) return;
+
+        const mode = currentLobby.gameMode as keyof typeof GAME_FLOWS;
+        const currentFlow = GAME_FLOWS[mode];
+
+        const viewToSet = currentFlow[screenIndex - 1];
+
+        if (viewToSet) {
+            setView(viewToSet);
+        }
+    }, [screenIndex]);
+
 
     // frontend PASSIVE LISTENER
     useEffect(() => {
@@ -80,9 +97,8 @@ function App() {
                 };
             });
             setOwnPrompt(data.assignedPrompt);
-
             setScreenIndex(0);
-            setNextScreen();
+            setNextScreen(true);
         });
 
         socket.on("lobby_dismantled", () => {
@@ -102,7 +118,7 @@ function App() {
         }) => {
             setCurrentRecording(data.nextRec);
             setListeningTime(data.listeningTime);
-            setNextScreen();
+            setNextScreen(true);
             setPlayersReady(prev => ({
                 ready: 0,
                 total: prev.total
@@ -164,23 +180,38 @@ function App() {
         });
     }
 
-    const setNextScreen = () => {
-        const currentLobby = lobbyRef.current;
-        if (!currentLobby || !currentLobby.gameMode) return;
+    const setNextScreen = (forward: boolean = true) => {
+        setScreenIndex((prev) => {
+            const mode = lobbyRef.current?.gameMode as keyof typeof GAME_FLOWS;
+            const flow = mode ? GAME_FLOWS[mode] : [];
 
-        const mode = currentLobby.gameMode as keyof typeof GAME_FLOWS;
-        const currentFlow = GAME_FLOWS[mode];
+            const next = forward ? prev + 1 : prev - 1;
 
-        setScreenIndex((prevIndex) => {
-            const nextIndex = prevIndex + 1;
-            const nextView = currentFlow[prevIndex];
-
-            if (nextView) {
-                setView(nextView);
-                return nextIndex;
-            }
-            return prevIndex;
+            const clamped = Math.max(1, Math.min(flow.length, next));
+            return clamped;
         });
+    };
+
+
+    const listenToRec = () => {
+        // truncate recording
+        const endTime = currentRecording.length > 0
+            ? Math.max(...currentRecording.map(n => n.time))
+            : 0;
+
+        const truncTime = 5;
+        const startTime = Math.max(0, endTime - truncTime);
+        const truncatedRef = currentRecording
+            .filter(note => note.time >= startTime)
+            .map(note => ({
+                ...note,
+                time: note.time - startTime
+            }));
+
+        setCurrentRecording(truncatedRef);
+
+        // forward = false
+        setNextScreen(false);
     };
 
     return (
@@ -216,7 +247,8 @@ function App() {
                     lobby={lobby}
                     prompt={ownPrompt || ""}
                     onBack={() => goToHome()}
-                    onNext={() => setNextScreen()}
+                    onNext={() => setNextScreen(true)}
+
                 />
             )}
 
@@ -225,6 +257,7 @@ function App() {
                     nickname={nickname}
                     lobby={lobby}
                     playersReady={playersReady}
+                    prevRecording={currentRecording}
                     onBack={() => goToHome()}
                     onNext={(recordingData) => passRecording(recordingData)} />
             )}
@@ -236,7 +269,7 @@ function App() {
                     listeningTime={listeningTime}
                     recording={currentRecording}
                     onBack={() => goToHome()}
-                    onNext={() => goToHome()} />
+                    onNext={() => listenToRec()} />
             )}
 
         </div>
