@@ -38,7 +38,6 @@ const RecordingScreen = ({ nickname, lobby, playersReady, prevRecording, onBack,
     // refs
     const playbackTimeoutRef = useRef<number | null>(null);
     const startTimeRef = useRef<number>(0);
-    const timerRef = useRef<number | null>(null);
     const [isRefPlaying, setIsRefPlaying] = useState(false);
 
     const playReference = async () => {
@@ -91,16 +90,28 @@ const RecordingScreen = ({ nickname, lobby, playersReady, prevRecording, onBack,
     };
 
     // rec timer
+    useEffect(() => {
+        let interval: number;
+
+        if (isRecording && recTimeLeft > 0) {
+            interval = window.setInterval(() => {
+                setRecTimeLeft((prev) => Math.max(0, prev - 0.1));
+            }, 100);
+        } else if (recTimeLeft === 0 && isRecording) {
+            setIsRecording(false);
+        }
+
+        return () => clearInterval(interval);
+    }, [isRecording, recTimeLeft]);
+
     const toggleRecording = async () => {
         if (!isRecording) {
             await start();
-
-            // override old recording
             setRecording([]);
+            setRecTimeLeft(recDuration);
             startTimeRef.current = now();
             setIsRecording(true);
         } else {
-            // manual end recording early
             setIsRecording(false);
         }
     };
