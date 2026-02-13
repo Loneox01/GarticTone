@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 
 import Keyboard from "../components/Keyboard";
+import TopBar from '../components/TopBar.tsx';
 import styles from '../styles/HostScreen.module.css';
 
 import { GAME_MODES } from '../types/gameModes.ts';
@@ -130,21 +131,15 @@ const HostScreen = ({ onBack, onStart, nickname, lobby }: HostScreenProps) => {
 
     return (
         <div className={styles['game-container']}>
-            <div className={styles['top-bar']}>
-                <button onClick={() => onBack()} className={styles['btn-back']}>
-                    ← Leave
-                </button>
 
-                <div className={styles['info-bar']}>
-                    <div className={styles['info-box']}>
-                        <span>PLAYER:</span> <strong>{nickname}</strong>
-                    </div>
-                    <div className={styles['info-box']}>
-                        <span>LOBBY:</span> <strong>{lobby.lobbyId}</strong>
-                    </div>
-                </div>
-            </div>
-            <hr style={{ borderColor: '#444', margin: '20px 0' }} />
+            <TopBar
+                onBack={onBack}
+                nickname={nickname}
+                lobbyId={lobby.lobbyId}
+                variant="default"
+            />
+
+            <hr style={{ borderColor: '#444', margin: '5px 0 20px 0' }} />
             {/* BLACK LINE SEPERATES TOP BAR FROM LOBBY ELEMENTS */}
 
             <div className={styles['main-content']}>

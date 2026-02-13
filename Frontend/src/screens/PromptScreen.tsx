@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react'
 
 import type { Lobby } from "../types/lobby.ts";
 
+import TopBar from '../components/TopBar.tsx';
+
 interface PromptProps {
     nickname: string;
     lobby: Lobby;
@@ -32,22 +34,14 @@ const PromptScreen = ({ nickname, lobby, prompt, onBack, onNext }: PromptProps) 
 
     return (
         <div className={styles['prompt-container']}>
-            <div className={styles['top-bar']}>
-                <button onClick={onBack} className={styles['btn-back']}>
-                    ← Leave
-                </button>
-                <div className={styles['info-bar']}>
-                    <div className={styles['info-box']}>
-                        <span>PLAYER:</span> <strong>{nickname}</strong>
-                    </div>
-                    <div className={styles['info-box']}>
-                        <span>MODE:</span> <strong>{lobby.gameMode}</strong>
-                    </div>
-                    <div className={styles['info-box']}>
-                        <span>TIME LEFT:</span> <strong className={styles.timer}>{timeLeft}s</strong>
-                    </div>
-                </div>
-            </div>
+
+            <TopBar
+                onBack={onBack}
+                nickname={nickname}
+                gameMode={lobby.gameMode}
+                timer={timeLeft}
+                variant="dark"
+            />
 
             <div className={styles['main-content']}>
                 <div className={styles['briefing-header']}>

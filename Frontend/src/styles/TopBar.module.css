@@ -1,0 +1,116 @@
+.top-bar-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 15px 20px;
+    box-sizing: border-box;
+}
+
+/* Sections for flex alignment */
+.left-section,
+.right-section {
+    flex: 1;
+}
+
+.right-section {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.info-cluster {
+    display: flex;
+    gap: 15px;
+}
+
+/* THEMES */
+.default .info-cluster {
+    background-color: #4c6987;
+    /* Guest/Host background */
+    padding: 10px;
+    border-radius: 8px;
+    border: 2px solid rgb(8, 43, 44);
+}
+
+.dark .info-cluster {
+    background-color: #202d3a;
+    /* Listening/Prompt background */
+    padding: 10px;
+    border-radius: 8px;
+    border: 2px solid rgb(8, 43, 44);
+}
+
+.glass .info-box {
+    background: rgba(255, 255, 255, 0.1);
+    /* Recording glass effect */
+}
+
+/* UI ELEMENTS */
+.btn-back {
+    padding: 10px 20px;
+    font-size: 1.0rem;
+    color: #ff4444;
+    border: 1px solid #ff4444;
+    background: transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.info-box {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    white-space: nowrap;
+}
+
+.info-box span {
+    font-size: 0.8rem;
+    color: #bdc3c7;
+    margin-right: 8px;
+}
+
+.info-box strong {
+    color: #27ae60;
+    letter-spacing: 1px;
+}
+
+/* Recording Screen Specific Round Timer */
+.round-timer {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: rgb(222, 222, 222);
+    background: rgba(9, 3, 44, 0.1);
+    backdrop-filter: blur(8px);
+    padding: 10px 20px;
+    border-radius: 6px;
+    border-left: 4px solid #44ff44;
+    min-width: 140px;
+    text-align: right;
+}
+
+.round-timer.panic {
+    border-left-color: #ff4444;
+    color: #ff4444;
+    animation: shake 0.2s infinite;
+}
+
+@keyframes shake {
+    0% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(2px);
+    }
+
+    75% {
+        transform: translateX(-2px);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}

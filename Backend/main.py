@@ -280,8 +280,13 @@ async def force_timeout(lobby_id, index, seconds):
 
 async def advance_to_results(lobby_id):
     lobby = lobbies[lobby_id]
+
+    sorted_players = sorted(lobby.players.values(), key=lambda p: p.index)
+    ordered_prompts = [p.assigned_prompt for p in sorted_players]
+
     await sio.emit('go_to_results', {
-        "recList": lobby.recList
+        "recList": lobby.recList,
+        "prompts": ordered_prompts
     }, room=lobby_id)
 
 # ---------------------------------------------

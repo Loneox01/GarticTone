@@ -1,4 +1,5 @@
 import Keyboard from "../components/Keyboard.tsx";
+import TopBar from "../components/TopBar.tsx";
 import styles from '../styles/GuestScreen.module.css';
 
 import type { Lobby } from "../types/lobby.ts";
@@ -21,23 +22,16 @@ const GuestScreen = ({ onBack, nickname, lobby }: GuestScreenProps) => {
 
     return (
         <div className={styles['guest-container']}>
-            <div className={styles['top-bar']}>
-                <button onClick={() => onBack()} className={styles['btn-back']}>
-                    ← Leave
-                </button>
 
-                <div className={styles['info-bar']}>
-                    <div className={styles['info-box']}>
-                        <span>PLAYER:</span> <strong>{nickname}</strong>
-                    </div>
-                    <div className={styles['info-box']}>
-                        <span>LOBBY:</span> <strong>{lobby.lobbyId}</strong>
-                    </div>
-                </div>
-            </div>
+            <TopBar
+                onBack={onBack}
+                nickname={nickname}
+                lobbyId={lobby.lobbyId}
+                variant="default"
+            />
 
             {/* BLACK LINE SEPERATES TOP BAR FROM LOBBY ELEMENTS */}
-            <hr style={{ borderColor: '#444', margin: '20px 0' }} />
+            <hr style={{ borderColor: '#444', margin: '5px 0 20px 0' }} />
 
             <div className={styles['main-content']}>
                 {/* LEFT SIDE: Player List (40%) */}

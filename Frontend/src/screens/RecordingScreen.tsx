@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { now, start, getTransport, getContext } from "tone";
 import Keyboard from "../components/Keyboard";
+import TopBar from '../components/TopBar.tsx';
 import sampler from '../components/Sampler';
 
 import type { Lobby } from "../types/lobby.ts";
@@ -22,6 +23,11 @@ const RecordingScreen = ({ nickname, lobby, playersReady, prevRecording, onBack,
 
     const [isRecording, setIsRecording] = useState(false);
     const [recording, setRecording] = useState<{ type: 'on' | 'off', note: string, time: number }[]>([]);
+    const recordingRef = useRef(recording);
+
+    useEffect(() => {
+        recordingRef.current = recording;
+    }, [recording]);
 
     // ui states
     const [recTimeLeft, setRecTimeLeft] = useState<number>(recDuration);
@@ -54,44 +60,23 @@ const RecordingScreen = ({ nickname, lobby, playersReady, prevRecording, onBack,
         setTimeout(() => setIsRefPlaying(false), (lastEventTime + 0.5) * 1000);
     };
 
+
     // round timer
     useEffect(() => {
-        const roundTimer = setInterval(() => {
+        const interval = setInterval(() => {
             setRoundTimeLeft((prev) => {
                 if (prev <= 1) {
-                    clearInterval(roundTimer);
+                    clearInterval(interval);
                     setIsWaiting(true);
-                    onNext(recording);
+                    onNext(recordingRef.current);
                     return 0;
                 }
                 return prev - 1;
             });
         }, 1000);
 
-        return () => clearInterval(roundTimer); // cleanup
-    }, []);
-
-    // recording timer
-    useEffect(() => {
-        if (isRecording) {
-            timerRef.current = window.setInterval(() => {
-                const elapsed = now() - startTimeRef.current;
-                const remaining = Math.max(0, recDuration - elapsed);
-                setRecTimeLeft(remaining);
-
-                if (remaining <= 0) {
-                    // stop recording, enforce time limit
-                    setIsRecording(false);
-                }
-            }, 100);
-        } else {
-            // not recording, reset
-            if (timerRef.current) window.clearInterval(timerRef.current);
-            setRecTimeLeft(recDuration);
-        }
-
-        return () => { if (timerRef.current) window.clearInterval(timerRef.current); };
-    }, [isRecording, recDuration]);
+        return () => clearInterval(interval);
+    }, [onNext]);
 
     // delta handler for held notes (note start/stop)
     const handleNoteStart = (noteName: string) => {
@@ -105,6 +90,7 @@ const RecordingScreen = ({ nickname, lobby, playersReady, prevRecording, onBack,
         setRecording(prev => [...prev, { type: 'off', note: noteName, time: elapsed }]);
     };
 
+    // rec timer
     const toggleRecording = async () => {
         if (!isRecording) {
             await start();
@@ -201,29 +187,15 @@ const RecordingScreen = ({ nickname, lobby, playersReady, prevRecording, onBack,
                 </div>
             )}
             {/* 1. TOP BAR: Global Info (Quiet/Static) */}
-            <div className={styles['top-bar']}>
-                <div className={styles['left-section']}>
-                    <button onClick={onBack} className={styles['btn-back']}>← Leave</button>
-                </div>
 
-                <div className={styles['info-cluster']}>
-                    <div className={styles['info-box']}>
-                        <span>PLAYER:</span> <strong>{nickname}</strong>
-                    </div>
-                    <div className={styles['info-box']}>
-                        <span>LOBBY:</span> <strong>{lobby.lobbyId}</strong>
-                    </div>
-                </div>
-
-                <div className={styles['right-section']}>
-                    <div className={`${styles['round-timer']} 
-                        ${roundTimeLeft < 10 ? styles['panic'] : ''} 
-                        ${roundTimeLeft <= 3 ? styles['final'] : ''}`
-                    }>
-                        Round Ends: {roundTimeLeft}s
-                    </div>
-                </div>
-            </div>
+            <TopBar
+                onBack={onBack}
+                nickname={nickname}
+                lobbyId={lobby.lobbyId}
+                timer={roundTimeLeft}
+                isPanic={roundTimeLeft < 10}
+                variant="glass"
+            />
 
             {/* 2. ACTION BAR: Controls and Timers */}
             <div className={styles['action-bar']}>

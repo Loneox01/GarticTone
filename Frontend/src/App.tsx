@@ -11,6 +11,7 @@ import RecordingScreen from './screens/RecordingScreen';
 import HostScreen from './screens/HostScreen.tsx';
 import PromptScreen from './screens/PromptScreen.tsx';
 import ListeningScreen from './screens/ListeningScreen.tsx';
+import ResultsScreen from './screens/ResultsScreen.tsx';
 
 function App() {
 
@@ -24,6 +25,7 @@ function App() {
     const [playersReady, setPlayersReady] = useState({ ready: 0, total: 0 });
     const [currentRecording, setCurrentRecording] = useState<any[]>([]);
     const [listeningTime, setListeningTime] = useState<number>(0);
+    const [gameResults, setGameResults] = useState<{ recList: any[], prompts: string[] } | null>(null);
 
 
     // lobby ref.
@@ -33,18 +35,17 @@ function App() {
 
     // screen handler
     useEffect(() => {
-        const currentLobby = lobbyRef.current;
-        if (!currentLobby?.gameMode) return;
+        if (!lobby?.gameMode) return;
 
-        const mode = currentLobby.gameMode as keyof typeof GAME_FLOWS;
+        const mode = lobby.gameMode as keyof typeof GAME_FLOWS;
         const currentFlow = GAME_FLOWS[mode];
 
         const viewToSet = currentFlow[screenIndex - 1];
 
-        if (viewToSet) {
+        if (viewToSet && viewToSet !== view) {
             setView(viewToSet);
         }
-    }, [screenIndex]);
+    }, [screenIndex, lobby?.gameMode]);
 
 
     // frontend PASSIVE LISTENER
@@ -97,8 +98,8 @@ function App() {
                 };
             });
             setOwnPrompt(data.assignedPrompt);
-            setScreenIndex(0);
-            setNextScreen(true);
+            setScreenIndex(1);
+            // setNextScreen(true);
         });
 
         socket.on("lobby_dismantled", () => {
@@ -118,11 +119,19 @@ function App() {
         }) => {
             setCurrentRecording(data.nextRec);
             setListeningTime(data.listeningTime);
-            setNextScreen(true);
+
+            setNextScreenRef.current(true);
+
             setPlayersReady(prev => ({
                 ready: 0,
                 total: prev.total
             }));
+        });
+
+        socket.on("go_to_results", (data: { recList: any[], prompts: string[] }) => {
+            console.log("reached gtr");
+            setGameResults(data);
+            setView("RESULTS");
         });
 
         return () => {
@@ -131,7 +140,9 @@ function App() {
             socket.off("join_error");
             socket.off("game_start");
             socket.off("lobby_dismantled");
-            socket.off("update_players_ready")
+            socket.off("update_players_ready");
+            socket.off("next_assignment");
+            socket.off("go_to_results");
         };
     }, []);
 
@@ -159,8 +170,15 @@ function App() {
                 user: nickname
             });
         }
-        setView('HOME');
         setLobby(null);
+        setCurrentRecording([]);
+        setOwnPrompt(null);
+        setGameResults(null);
+        setListeningTime(0);
+        setScreenIndex(0);
+        setPlayersReady({ ready: 0, total: 0 });
+        setNickname('');
+        setView('HOME');
     };
 
     // SYNC: START GAME
@@ -191,6 +209,12 @@ function App() {
             return clamped;
         });
     };
+
+    const setNextScreenRef = useRef(setNextScreen);
+
+    useEffect(() => {
+        setNextScreenRef.current = setNextScreen;
+    });
 
 
     const listenToRec = () => {
@@ -270,6 +294,14 @@ function App() {
                     recording={currentRecording}
                     onBack={() => goToHome()}
                     onNext={() => listenToRec()} />
+            )}
+
+            {view === 'RESULTS' && gameResults && (
+                <ResultsScreen
+                    results={gameResults}
+                    nickname={nickname}
+                    onHome={goToHome}
+                />
             )}
 
         </div>

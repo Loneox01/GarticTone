@@ -4,7 +4,8 @@ export const GAME_VIEWS = {
     HOSTLOBBY: 'HOSTLOBBY',
     PROMPT: 'PROMPT',
     RECORDING: 'RECORDING',
-    LISTENING: 'LISTENING'
+    LISTENING: 'LISTENING',
+    RESULTS: 'RESULTS'
 } as const;
 
 
@@ -14,7 +15,8 @@ export const GAME_FLOWS = {
     CLASSIC: [
         GAME_VIEWS.PROMPT,
         GAME_VIEWS.RECORDING,
-        GAME_VIEWS.LISTENING
+        GAME_VIEWS.LISTENING,
+        GAME_VIEWS.RESULTS
     ],
     BLIND_KARAOKE: [GAME_VIEWS.HOME]
 } as const;
