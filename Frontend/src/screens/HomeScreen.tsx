@@ -1,4 +1,4 @@
-import styles from '../styles/Homescreen.module.css';
+import styles from '../styles/HomeScreen.module.css';
 import { useState, useEffect } from 'react'
 import MusicBackground from '../components/DriftingNotes';
 
