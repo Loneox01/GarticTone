@@ -6,7 +6,6 @@
     height: 100%;
     overflow: hidden;
     z-index: 1;
-    /* unclickable notes */
     pointer-events: none;
 }
 
@@ -14,23 +13,27 @@
     position: absolute;
     left: -50px;
     color: rgb(212, 212, 212);
-    /* 
-        sideScroll: The long 15s journey across
-        rapidSway: The quick 1s up-down bounce
-    */
-    animation:
-        sideScroll 15s linear infinite,
-        rapidSway 2.5s ease-in-out infinite;
+    will-change: transform;
+    /* induces gpu > cpu */
+
+    animation: sideScroll 15s linear infinite;
+
     white-space: nowrap;
     user-select: none;
-
     font-family: "Times New Roman", Times, serif;
 }
 
-/* left right drift */
+.note-bounce {
+    display: inline-block;
+    will-change: transform;
+
+    animation: rapidSway 2.5s ease-in-out infinite;
+}
+
+
 @keyframes sideScroll {
     0% {
-        transform: translateX(0) translateY(5vh);
+        transform: translate3d(0, 5vh, 0);
         opacity: 0;
     }
 
@@ -43,20 +46,20 @@
     }
 
     100% {
-        transform: translateX(calc(100vw + 100px)) translateY(-5vh);
+        transform: translate3d(calc(100vw + 100px), -5vh, 0);
         opacity: 0;
     }
 }
 
-/* up down sway */
+
 @keyframes rapidSway {
 
     0%,
     100% {
-        margin-top: 0px;
+        transform: translateY(0px);
     }
 
     50% {
-        margin-top: -20px;
+        transform: translateY(-20px);
     }
 }

@@ -43,7 +43,12 @@ const MusicBackground = () => {
                         opacity: note.opacity
                     }}
                 >
-                    {note.symbol}
+                    <span
+                        className={styles['note-bounce']}
+                        style={{ animationDelay: `${note.delay}s` }}
+                    >
+                        {note.symbol}
+                    </span>
                 </span>
             ))}
         </div>
