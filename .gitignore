@@ -36,3 +36,7 @@ __pycache__/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Env files
+.env
+env

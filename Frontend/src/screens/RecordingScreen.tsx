@@ -23,11 +23,7 @@ const RecordingScreen = ({ nickname, lobby, playersReady, prevRecording, onBack,
 
     const [isRecording, setIsRecording] = useState(false);
     const [recording, setRecording] = useState<{ type: 'on' | 'off', note: string, time: number }[]>([]);
-    const recordingRef = useRef(recording);
 
-    useEffect(() => {
-        recordingRef.current = recording;
-    }, [recording]);
 
     // ui states
     const [recTimeLeft, setRecTimeLeft] = useState<number>(recDuration);
@@ -39,6 +35,16 @@ const RecordingScreen = ({ nickname, lobby, playersReady, prevRecording, onBack,
     const playbackTimeoutRef = useRef<number | null>(null);
     const startTimeRef = useRef<number>(0);
     const [isRefPlaying, setIsRefPlaying] = useState(false);
+    const recordingRef = useRef(recording);
+    const hasSubmittedRef = useRef(false);
+    const onNextRef = useRef(onNext);
+    useEffect(() => {
+        onNextRef.current = onNext;
+    }, [onNext]);
+
+    useEffect(() => {
+        recordingRef.current = recording;
+    }, [recording]);
 
     const playReference = async () => {
         if (!prevRecording || isRefPlaying) return;
@@ -59,15 +65,19 @@ const RecordingScreen = ({ nickname, lobby, playersReady, prevRecording, onBack,
         setTimeout(() => setIsRefPlaying(false), (lastEventTime + 0.5) * 1000);
     };
 
+    const submitRecording = (data: any[]) => {
+        hasSubmittedRef.current = true;
 
-    // round timer
+        setIsWaiting(true);
+        onNext(data);
+    };
+
     useEffect(() => {
         const interval = setInterval(() => {
             setRoundTimeLeft((prev) => {
+                // ONLY calculate the next value here
                 if (prev <= 1) {
                     clearInterval(interval);
-                    setIsWaiting(true);
-                    onNext(recordingRef.current);
                     return 0;
                 }
                 return prev - 1;
@@ -75,7 +85,13 @@ const RecordingScreen = ({ nickname, lobby, playersReady, prevRecording, onBack,
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [onNext]);
+    }, []);
+
+    useEffect(() => {
+        if (roundTimeLeft === 0) {
+            submitRecording(recordingRef.current);
+        }
+    }, [roundTimeLeft]);
 
     // delta handler for held notes (note start/stop)
     const handleNoteStart = (noteName: string) => {
@@ -117,7 +133,6 @@ const RecordingScreen = ({ nickname, lobby, playersReady, prevRecording, onBack,
     };
 
     const playBack = async () => {
-        console.log(recording)
         // this checks for browser allowing audio
         if (getContext().state !== 'running') {
             await start();
@@ -252,7 +267,7 @@ const RecordingScreen = ({ nickname, lobby, playersReady, prevRecording, onBack,
                         disabled={recording.length === 0 || isRecording}
                         onClick={() => {
                             setIsWaiting(true);
-                            onNext(recording);
+                            submitRecording(recording);
                         }}
                     >
                         Ready! <span>✓</span>

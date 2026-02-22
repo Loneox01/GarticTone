@@ -1,14 +1,14 @@
 import './App.css';
 import { useState, useEffect, useRef } from 'react';
-import { supabase } from './lib/supabaseClient.ts';
+import { supabase } from './lib/supabaseClient';
 import { DEFAULT_SONG_LIST } from './types/constants.ts'
 
 import type { Lobby } from "./types/lobby.ts";
-import { GAME_FLOWS } from './types/views.ts';
+import { GAME_FLOWS, type GameViews } from './types/views.ts';
 
-import GuestScreen from './screens/GuestScreen.tsx';
-import HomeScreen from './screens/HomeScreen.tsx';
-import RecordingScreen from './screens/RecordingScreen.tsx';
+import GuestScreen from './screens/GuestScreen';
+import HomeScreen from './screens/HomeScreen';
+import RecordingScreen from './screens/RecordingScreen';
 import HostScreen from './screens/HostScreen.tsx';
 import PromptScreen from './screens/PromptScreen.tsx';
 import ListeningScreen from './screens/ListeningScreen.tsx';
@@ -16,6 +16,7 @@ import ResultsScreen from './screens/ResultsScreen.tsx';
 
 function App() {
 
+    const [view, setView] = useState<GameViews>('HOME');
     const [nickname, setNickname] = useState('');
     const [lobby, setLobby] = useState<Lobby | null>(null);
     const lobbyRef = useRef<Lobby | null>(null);
@@ -27,61 +28,38 @@ function App() {
     const [listeningTime, setListeningTime] = useState<number>(0);
     const [gameResults, setGameResults] = useState<{ recList: any[], prompts: string[] } | null>(null);
 
-    const isAdvancingRoundRef = useRef(false);
-
     useEffect(() => {
         lobbyRef.current = lobby;
     }, [lobby]);
 
-    // Supabase disconnect listener
+    // screen handler
     useEffect(() => {
-        if (!lobby?.lobbyId || !nickname) return;
-        const roomCode = lobby.lobbyId;
+        if (!lobby?.gameMode) return;
 
-        // Send heartbeat
-        const heartbeatInterval = setInterval(async () => {
-            await supabase.from('players')
-                .update({ last_seen: new Date().toISOString() })
-                .eq('room_code', roomCode)
-                .eq('nickname', nickname);
-        }, 3000);
+        const mode = lobby.gameMode as keyof typeof GAME_FLOWS;
+        const currentFlow = GAME_FLOWS[mode];
+        const viewToSet = currentFlow[screenIndex - 1];
 
-        // Cleanup stale players - SQL triggers handle the rest
-        const cleanupInterval = setInterval(async () => {
-            const staleThreshold = new Date(Date.now() - 10000);
-
-            await supabase.from('players')
-                .delete()
-                .eq('room_code', roomCode)
-                .lt('last_seen', staleThreshold.toISOString());
-        }, 5000);
-
-        return () => {
-            clearInterval(heartbeatInterval);
-            clearInterval(cleanupInterval);
-        };
-    }, [lobby?.lobbyId, nickname]);
+        if (viewToSet && viewToSet !== view) {
+            setView(viewToSet);
+        }
+    }, [screenIndex, lobby?.gameMode]);
 
     // ==========================================
     // FRONTEND PASSIVE LISTENER (SUPABASE SYNC)
     // ==========================================
     useEffect(() => {
         if (!lobby?.lobbyId) return;
+
         const roomCode = lobby.lobbyId;
 
-        // 1. Listen for player changes (joins, leaves, ready status)
+        // 1. Listen for PLAYER changes (Joins, Leaves, Ready Status)
         const playersChannel = supabase
             .channel(`players-${roomCode}`)
-            .on('postgres_changes', {
-                event: '*',
-                schema: 'public',
-                table: 'players',
-                filter: `room_code=eq.${roomCode}`
-            }, async () => {
-                const { data } = await supabase.from('players')
-                    .select('*')
-                    .eq('room_code', roomCode)
-                    .order('created_at', { ascending: true });
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'players', filter: `room_code=eq.${roomCode}` }, async () => {
+
+                // Fetch the latest players
+                const { data } = await supabase.from('players').select('*').eq('room_code', roomCode);
 
                 if (data) {
                     let readyCount = 0;
@@ -89,54 +67,29 @@ function App() {
 
                     data.forEach(p => {
                         if (p.ready) readyCount++;
-                        playersDict[p.nickname] = p;
+                        playersDict[p.nickname] = p; // Rebuild the dictionary
                     });
 
                     setPlayersReady({ ready: readyCount, total: data.length });
+
+                    // Sync the dictionary back into the lobby state
                     setLobby(prev => prev ? { ...prev, players: playersDict } : null);
 
-                    // Host advance logic with race condition guard
+                    // === THE HOST ADVANCE LOGIC ===
                     const currentLobby = lobbyRef.current;
-                    if (currentLobby?.lobbyHost === nickname &&
-                        readyCount === data.length &&
-                        data.length > 0 &&
-                        !isAdvancingRoundRef.current) {  // ← NEW GUARD
+                    if (currentLobby?.lobbyHost === nickname && readyCount === data.length && data.length > 0) {
+                        const { data: currentRoom } = await supabase.from('rooms')
+                            .select('round_num, num_rounds')
+                            .eq('room_code', roomCode)
+                            .single();
 
-                        // Set flag IMMEDIATELY to block concurrent calls
-                        isAdvancingRoundRef.current = true;
+                        if (currentRoom) {
+                            await supabase.from('rooms').update({
+                                round_num: currentRoom.round_num + 1
+                            }).eq('room_code', roomCode);
 
-                        // console.log('🚀 HOST ADVANCING ROUND:', {
-                        //     readyCount,
-                        //     total: data.length,
-                        //     timestamp: Date.now()
-                        // });
-
-                        try {
-                            const { data: currentRoom } = await supabase.from('rooms')
-                                .select('round_num, num_rounds')
-                                .eq('room_code', roomCode)
-                                .single();
-
-                            if (currentRoom) {
-                                // console.log('📈 INCREMENTING ROUND:', {
-                                //     from: currentRoom.round_num,
-                                //     to: currentRoom.round_num + 1
-                                // });
-
-                                await supabase.from('rooms').update({
-                                    round_num: currentRoom.round_num + 1
-                                }).eq('room_code', roomCode);
-
-                                await supabase.from('players').update({
-                                    ready: false
-                                }).eq('room_code', roomCode);
-                            }
-                        } finally {
-                            // Reset flag after a short delay to allow room update to propagate
-                            setTimeout(() => {
-                                isAdvancingRoundRef.current = false;
-                                // console.log('✅ Round advance complete, flag reset');
-                            }, 1000);
+                            // Reset everyone to not ready
+                            await supabase.from('players').update({ ready: false }).eq('room_code', roomCode);
                         }
                     }
                 }
@@ -146,25 +99,22 @@ function App() {
         // 2. Listen for ROOM changes (Game Start, Round Advancement, Dismantle)
         const roomsChannel = supabase
             .channel(`rooms-${roomCode}`)
-            .on('postgres_changes', {
-                event: 'DELETE',
-                schema: 'public',
-                table: 'rooms',
-                filter: `room_code=eq.${roomCode}`
-            }, () => {
-                // Room was deleted (by trigger) - just go home
-                setError('HOST_DISCONNECT');
-                resetLocalState();
-            })
-            .on('postgres_changes', {
-                event: 'UPDATE',
-                schema: 'public',
-                table: 'rooms',
-                filter: `room_code=eq.${roomCode}`
-            }, async (payload) => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms', filter: `room_code=eq.${roomCode}` }, async (payload) => {
+
+                // If Host deletes the room, kick everyone out
+                if (payload.eventType === 'DELETE') {
+                    setNickname('');
+                    setError('HOST_DISCONNECT');
+                    setView('HOME');
+                    setLobby(null);
+                    return;
+                }
+
                 const updatedRoom = payload.new as any;
+
                 if (updatedRoom) {
-                    // 1. SYNC: lobby state
+                    // 1. Sync the lobby state
+                    // We map the snake_case from DB to your camelCase Lobby type
                     setLobby(prev => prev ? {
                         ...prev,
                         gameMode: updatedRoom.game_mode || prev.gameMode,
@@ -201,7 +151,7 @@ function App() {
                     }
 
                     // 3. SYNC: ROUND ADVANCEMENT
-                    // If the DB round is higher than our local round, a new round has started
+                    // If the DB round is higher than our local round, a new round has started!
                     if (updatedRoom.round_num > (currentLobby.roundNum || 1)) {
                         const myPlayer = currentLobby.players[nickname];
 
@@ -232,6 +182,7 @@ function App() {
                             .eq('room_code', roomCode)
                             .eq('nickname', nickname)
                             .single();
+
                         setOwnPrompt(me?.assigned_prompt || "Start a melody!");
                         setScreenIndex(1); // Moves from Lobby to the first game screen (PROMPT)
                     }
@@ -244,6 +195,7 @@ function App() {
             supabase.removeChannel(roomsChannel);
         };
     }, [lobby?.lobbyId, nickname, screenIndex]);
+
 
     // ==========================================
     // FRONTEND TRIGGER MESSENGERS
@@ -279,7 +231,7 @@ function App() {
                 roundNum: 1,
                 numRounds: 1,
                 recList: []
-            });
+            }); setView('HOSTLOBBY');
 
         } else {
             // 2. JOINING EXISTING LOBBY
@@ -310,30 +262,25 @@ function App() {
                 roundNum: room.round_num || 1,
                 numRounds: room.num_rounds || 1,
                 recList: room.rec_list || []
-            });
+            }); setView('LOBBY');
         }
     };
 
     const goToHome = async () => {
         if (lobby && nickname) {
-            await supabase.from('players')
-                .delete()
-                .eq('room_code', lobby.lobbyId)
-                .eq('nickname', nickname);
+            if (lobby.lobbyHost === nickname) {
+                // Host leaves: Delete room (Database triggers will cascade and delete all players)
+                await supabase.from('rooms').delete().eq('room_code', lobby.lobbyId);
+            } else {
+                // Guest leaves
+                await supabase.from('players').delete().eq('room_code', lobby.lobbyId).eq('nickname', nickname);
+            }
         }
 
-        resetLocalState();
-    };
-
-    const resetLocalState = () => {
-        setLobby(null);
-        setScreenIndex(0);
-        setOwnPrompt(null);
-        setCurrentRecording([]);
-        setGameResults(null);
-        setListeningTime(0);
-        setPlayersReady({ ready: 0, total: 0 });
-        setNickname('');
+        // Reset local states
+        setLobby(null); setCurrentRecording([]); setOwnPrompt(null); setGameResults(null);
+        setListeningTime(0); setScreenIndex(0); setPlayersReady({ ready: 0, total: 0 });
+        setNickname(''); setView('HOME');
     };
 
     // SYNC: START GAME (Triggered by Host)
@@ -345,97 +292,52 @@ function App() {
         if (!players || players.length < 2) return alert("2+ players required to play.");
 
         // 2. Prepare Prompts & Initial Chains
-        let availablePrompts: string[] = [];
-
-        if (settings.inputList && settings.inputList.trim().length > 0) {
-            availablePrompts = settings.inputList.split(',').map((item: string) => item.trim());
-        }
-
-        if (availablePrompts.length < players.length) {
-            availablePrompts = [...DEFAULT_SONG_LIST];
-        }
-
-        // 3. Assign indexes and prompts to players
-        for (let i = availablePrompts.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [availablePrompts[i], availablePrompts[j]] = [availablePrompts[j], availablePrompts[i]];
-        }
+        const isClassic = mode === "CLASSIC";
+        let availablePrompts = isClassic ? [...DEFAULT_SONG_LIST] : [];
+        // Shuffle prompts
+        availablePrompts = availablePrompts.sort(() => 0.5 - Math.random());
 
         const emptyRecList = Array.from({ length: players.length }, () => []);
 
-        // 4. Assign indexes and prompts to players
+        // 3. Assign indexes and prompts to players
         const updates = players.map((p, index) => {
             return supabase.from('players').update({
                 player_index: index,
-                // Use modulo index so if we have more players than prompts, it wraps around
-                assigned_prompt: availablePrompts[index % availablePrompts.length],
+                assigned_prompt: isClassic ? availablePrompts[index] : null,
                 ready: false
             }).eq('id', p.id);
         });
         await Promise.all(updates);
 
-        // 5. Update the room to Start Game
+        // 4. Update the room to Start Game
         await supabase.from('rooms').update({
             game_mode: mode,
             settings: settings,
             game_started: true,
             round_num: 1,
-            num_rounds: Math.min(players.length, 10),
+            num_rounds: players.length, // From main.py logic
             rec_list: emptyRecList
         }).eq('room_code', lobby.lobbyId);
     };
 
     // SYNC: SUBMIT RECORDING
     const passRecording = async (recordingData: any[]) => {
-        // console.log('🎵 passRecording CALLED:', {
-        //     timestamp: Date.now(),
-        //     nickname,
-        //     lobbyId: lobby?.lobbyId,
-        //     dataLength: recordingData.length,
-        //     firstNote: recordingData[0],
-        //     lastNote: recordingData[recordingData.length - 1]
-        // });
+        if (!lobby) return;
 
-        if (!lobby) {
-            // console.error('❌ No lobby in passRecording');
-            return;
-        }
+        // 1. Fetch current room state & my player index
+        const { data: room } = await supabase.from('rooms').select('rec_list, round_num').eq('room_code', lobby.lobbyId).single();
+        const { data: me } = await supabase.from('players').select('player_index').eq('room_code', lobby.lobbyId).eq('nickname', nickname).single();
 
-        // 1. Fetch current state
-        const { data: room } = await supabase.from('rooms')
-            .select('rec_list, round_num')
-            .eq('room_code', lobby.lobbyId)
-            .single();
-        const { data: me } = await supabase.from('players')
-            .select('player_index')
-            .eq('room_code', lobby.lobbyId)
-            .eq('nickname', nickname)
-            .single();
+        if (!room || !me) return;
 
-        // console.log('📊 passRecording STATE:', {
-        //     roomRoundNum: room?.round_num,
-        //     myPlayerIndex: me?.player_index,
-        //     recListLength: room?.rec_list?.length
-        // });
-
-        if (!room || !me) {
-            // console.error('❌ Missing room or player data');
-            return;
-        }
-
+        let currentRecList = room.rec_list || [];
         const roundNum = room.round_num || 1;
-        const targetChainIndex = (me.player_index + roundNum - 1) % room.rec_list.length;
 
-        // console.log('🎯 TARGET CHAIN:', {
-        //     playerIndex: me.player_index,
-        //     roundNum,
-        //     totalChains: room.rec_list.length,
-        //     targetChainIndex,
-        //     calculation: `(${me.player_index} + ${roundNum} - 1) % ${room.rec_list.length}`
-        // });
+        // 2. Calculate which chain we are adding to
+        const targetChainIndex = (me.player_index + roundNum - 1) % currentRecList.length;
+        let targetChain = currentRecList[targetChainIndex] || [];
 
-        // 2. Calculate offset
-        const targetChain = room.rec_list[targetChainIndex] || [];
+        // 3. Apply Time Offset (from your main.py)
         const currentDuration = targetChain.length > 0
             ? Math.max(...targetChain.map((n: any) => n.time))
             : 0;
@@ -445,75 +347,13 @@ function App() {
             time: note.time + currentDuration
         }));
 
-        // console.log('⏱️ OFFSET CALCULATION:', {
-        //     currentDuration,
-        //     originalDataLength: recordingData.length,
-        //     offsetDataLength: offsetRecording.length,
-        //     firstOriginal: recordingData[0],
-        //     firstOffset: offsetRecording[0]
-        // });
+        // 4. Update the specific chain
+        currentRecList[targetChainIndex] = [...targetChain, ...offsetRecording];
 
-        // 3. CALL THE RPC - REMOVE JSON.stringify!
-        // console.log('🚀 CALLING RPC:', {
-        //     roomCode: lobby.lobbyId,
-        //     chainIndex: targetChainIndex,
-        //     nickname,
-        //     notesCount: offsetRecording.length,
-        //     notesType: typeof offsetRecording,
-        //     isArray: Array.isArray(offsetRecording)
-        // });
-
-        await supabase.rpc('append_recording', {
-            p_room_code: lobby.lobbyId,
-            p_chain_index: targetChainIndex,
-            p_new_notes: offsetRecording,
-            p_nickname: nickname
-        });
+        // 5. Save the new chain to the room and mark myself as Ready
+        await supabase.from('rooms').update({ rec_list: currentRecList }).eq('room_code', lobby.lobbyId);
+        await supabase.from('players').update({ ready: true }).eq('room_code', lobby.lobbyId).eq('nickname', nickname);
     };
-
-    // ==========================================
-    // HOST AUTO-ADVANCE TIMER (AFK / DISCONNECT FALLBACK)
-    // ==========================================
-    useEffect(() => {
-        if (!lobby || !lobby.gameStarted || lobby.lobbyHost !== nickname) return;
-
-        const mode = lobby.gameMode as keyof typeof GAME_FLOWS;
-        const flow = GAME_FLOWS[mode];
-        if (!flow) return;
-
-        const currentViewType = flow[screenIndex - 1];
-
-        if (currentViewType === 'RECORDING') {
-            const roundDur = lobby.settings?.roundDuration || 15;
-            const timeLimit = roundDur + 5;
-
-            // console.log('⏰ HOST AFK TIMER STARTED:', {
-            //     roundDuration: roundDur,
-            //     timeLimit,
-            //     screenIndex,
-            //     roundNum: lobby.roundNum
-            // });
-
-            const autoAdvanceTimer = setTimeout(async () => {
-                const me = lobby.players[nickname];
-
-                // console.log('⏰ HOST AFK TIMER FIRED:', {
-                //     meReady: me?.ready,
-                //     willSubmit: me && !me.ready
-                // });
-
-                if (me && !me.ready) {
-                    // console.log("⏳ Host AFK fallback: Submitting silence...");
-                    await passRecording([]);
-                }
-            }, timeLimit * 1000);
-
-            return () => {
-                // console.log('🛑 HOST AFK TIMER CLEANED UP');
-                clearTimeout(autoAdvanceTimer);
-            };
-        }
-    }, [screenIndex, lobby?.roundNum, lobby?.gameStarted]);
 
     const setNextScreen = (forward: boolean = true) => {
         setScreenIndex((prev) => {
@@ -543,63 +383,66 @@ function App() {
         setNextScreen(false);
     };
 
-    const renderActiveScreen = () => {
-        // 1. If no lobby exists, we are at the Start
-        if (!lobby) return <HomeScreen onJoin={goToLobby} externalError={error} />;
+    return (
+        <div className="app-main">
+            {view === 'HOME' && <HomeScreen onJoin={goToLobby} externalError={error} />}
 
-        // 2. If game hasn't started, show Lobby screens
-        if (!lobby.gameStarted) {
-            // Check if current user is the host instead of using 'view'
-            return lobby.lobbyHost === nickname
-                ? <HostScreen nickname={nickname} lobby={lobby} onBack={goToHome} onStart={initGame} />
-                : <GuestScreen nickname={nickname} lobby={lobby} onBack={goToHome} />;
-        }
+            {view === 'LOBBY' && lobby && (
+                <GuestScreen nickname={nickname} lobby={lobby} onBack={() => goToHome()} />
+            )}
 
-        // 3. If game IS started, use the flow system (GAME_FLOWS)
-        const mode = lobby.gameMode as keyof typeof GAME_FLOWS;
-        const flow = GAME_FLOWS[mode];
-        const currentViewType = flow[screenIndex - 1];
+            {view === 'HOSTLOBBY' && lobby && (
+                <HostScreen
+                    nickname={nickname}
+                    lobby={lobby}
+                    onBack={() => goToHome()}
+                    onStart={(mode, settings) => {
+                        initGame(mode, settings); // Pushes update to DB
+                    }}
+                />
+            )}
 
-        switch (currentViewType) {
-            case 'PROMPT':
-                return <PromptScreen
+            {view === 'PROMPT' && lobby && (
+                <PromptScreen
                     nickname={nickname}
                     lobby={lobby}
                     prompt={ownPrompt || ""}
                     onBack={() => goToHome()}
-                    onNext={() => setNextScreen(true)} />;
-            case 'RECORDING':
-                return <RecordingScreen
+                    onNext={() => setNextScreen(true)}
+                />
+            )}
+
+            {view === 'RECORDING' && lobby && (
+                <RecordingScreen
                     nickname={nickname}
                     lobby={lobby}
                     playersReady={playersReady}
                     prevRecording={currentRecording}
                     onBack={() => goToHome()}
-                    onNext={(recordingData) => passRecording(recordingData)} />;
-            case 'LISTENING':
-                return <ListeningScreen
+                    onNext={(recordingData) => passRecording(recordingData)} />
+            )}
+
+            {view === 'LISTENING' && lobby && (
+                <ListeningScreen
                     nickname={nickname}
                     lobby={lobby}
                     listeningTime={listeningTime}
                     recording={currentRecording}
                     onBack={() => goToHome()}
-                    onNext={() => listenToRec()} />;
-            case 'RESULTS':
-                return <ResultsScreen
-                    results={gameResults!}
+                    onNext={() => listenToRec()} />
+            )}
+
+            {view === 'RESULTS' && gameResults && (
+                <ResultsScreen
+                    results={gameResults}
                     nickname={nickname}
                     onHome={goToHome}
-                />;
-            default:
-                return <div>Loading...       (if this is Blind Karaoke, Sorry! It's still in progess. Please refresh and try out Classic in the mean time. )</div>;
-        }
-    };
+                />
+            )}
 
-    return (
-        <div className="app-main">
-            {renderActiveScreen()}
         </div>
     );
+
 }
 
 export default App
