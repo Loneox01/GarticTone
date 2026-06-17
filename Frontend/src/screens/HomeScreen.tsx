@@ -13,7 +13,7 @@ const HomeScreen = ({ onJoin, externalError }: HomeProps) => {
     const [nickname, setNickname] = useState('');
     const [lobbyId, setLobbyId] = useState('');
     const [placeholderNN, setPlaceholderNN] = useState('Nickname');
-    const [placeholderLID, setPlaceholderLID] = useState('LobbyID (leave blank for new lobby)');
+    const [placeholderLID, setPlaceholderLID] = useState('LobbyID (leave blank for new)');
     const [isShaking, setIsShaking] = useState(false);
 
     const isNicknameError = externalError === "NICKNAME_TAKEN" || (isShaking && nickname === '' && !(externalError === "HOST_DISCONNECT"));
