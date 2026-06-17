@@ -105,12 +105,6 @@ function App() {
                         // Set flag IMMEDIATELY to block concurrent calls
                         isAdvancingRoundRef.current = true;
 
-                        // console.log('🚀 HOST ADVANCING ROUND:', {
-                        //     readyCount,
-                        //     total: data.length,
-                        //     timestamp: Date.now()
-                        // });
-
                         try {
                             const { data: currentRoom } = await supabase.from('rooms')
                                 .select('round_num, num_rounds')
@@ -118,10 +112,7 @@ function App() {
                                 .single();
 
                             if (currentRoom) {
-                                // console.log('📈 INCREMENTING ROUND:', {
-                                //     from: currentRoom.round_num,
-                                //     to: currentRoom.round_num + 1
-                                // });
+
 
                                 await supabase.from('rooms').update({
                                     round_num: currentRoom.round_num + 1
@@ -135,7 +126,6 @@ function App() {
                             // Reset flag after a short delay to allow room update to propagate
                             setTimeout(() => {
                                 isAdvancingRoundRef.current = false;
-                                // console.log('✅ Round advance complete, flag reset');
                             }, 1000);
                         }
                     }
@@ -387,17 +377,16 @@ function App() {
 
     // SYNC: SUBMIT RECORDING
     const passRecording = async (recordingData: any[]) => {
-        // console.log('🎵 passRecording CALLED:', {
-        //     timestamp: Date.now(),
-        //     nickname,
-        //     lobbyId: lobby?.lobbyId,
-        //     dataLength: recordingData.length,
-        //     firstNote: recordingData[0],
-        //     lastNote: recordingData[recordingData.length - 1]
-        // });
+        console.log('🎵 passRecording CALLED:', {
+            timestamp: Date.now(),
+            nickname,
+            lobbyId: lobby?.lobbyId,
+            dataLength: recordingData.length,
+            firstNote: recordingData[0],
+            lastNote: recordingData[recordingData.length - 1]
+        });
 
         if (!lobby) {
-            // console.error('❌ No lobby in passRecording');
             return;
         }
 
@@ -412,29 +401,15 @@ function App() {
             .eq('nickname', nickname)
             .single();
 
-        // console.log('📊 passRecording STATE:', {
-        //     roomRoundNum: room?.round_num,
-        //     myPlayerIndex: me?.player_index,
-        //     recListLength: room?.rec_list?.length
-        // });
 
         if (!room || !me) {
-            // console.error('❌ Missing room or player data');
             return;
         }
 
         const roundNum = room.round_num || 1;
         const targetChainIndex = (me.player_index + roundNum - 1) % room.rec_list.length;
 
-        // console.log('🎯 TARGET CHAIN:', {
-        //     playerIndex: me.player_index,
-        //     roundNum,
-        //     totalChains: room.rec_list.length,
-        //     targetChainIndex,
-        //     calculation: `(${me.player_index} + ${roundNum} - 1) % ${room.rec_list.length}`
-        // });
 
-        // 2. Calculate offset
         const targetChain = room.rec_list[targetChainIndex] || [];
         const currentDuration = targetChain.length > 0
             ? Math.max(...targetChain.map((n: any) => n.time))
@@ -444,24 +419,6 @@ function App() {
             ...note,
             time: note.time + currentDuration
         }));
-
-        // console.log('⏱️ OFFSET CALCULATION:', {
-        //     currentDuration,
-        //     originalDataLength: recordingData.length,
-        //     offsetDataLength: offsetRecording.length,
-        //     firstOriginal: recordingData[0],
-        //     firstOffset: offsetRecording[0]
-        // });
-
-        // 3. CALL THE RPC - REMOVE JSON.stringify!
-        // console.log('🚀 CALLING RPC:', {
-        //     roomCode: lobby.lobbyId,
-        //     chainIndex: targetChainIndex,
-        //     nickname,
-        //     notesCount: offsetRecording.length,
-        //     notesType: typeof offsetRecording,
-        //     isArray: Array.isArray(offsetRecording)
-        // });
 
         await supabase.rpc('append_recording', {
             p_room_code: lobby.lobbyId,
@@ -487,20 +444,8 @@ function App() {
             const roundDur = lobby.settings?.roundDuration || 15;
             const timeLimit = roundDur + 5;
 
-            // console.log('⏰ HOST AFK TIMER STARTED:', {
-            //     roundDuration: roundDur,
-            //     timeLimit,
-            //     screenIndex,
-            //     roundNum: lobby.roundNum
-            // });
-
             const autoAdvanceTimer = setTimeout(async () => {
                 const me = lobby.players[nickname];
-
-                // console.log('⏰ HOST AFK TIMER FIRED:', {
-                //     meReady: me?.ready,
-                //     willSubmit: me && !me.ready
-                // });
 
                 if (me && !me.ready) {
                     // console.log("⏳ Host AFK fallback: Submitting silence...");
@@ -509,7 +454,6 @@ function App() {
             }, timeLimit * 1000);
 
             return () => {
-                // console.log('🛑 HOST AFK TIMER CLEANED UP');
                 clearTimeout(autoAdvanceTimer);
             };
         }
@@ -544,10 +488,8 @@ function App() {
     };
 
     const renderActiveScreen = () => {
-        // 1. If no lobby exists, we are at the Start
         if (!lobby) return <HomeScreen onJoin={goToLobby} externalError={error} />;
 
-        // 2. If game hasn't started, show Lobby screens
         if (!lobby.gameStarted) {
             // Check if current user is the host instead of using 'view'
             return lobby.lobbyHost === nickname
@@ -555,7 +497,6 @@ function App() {
                 : <GuestScreen nickname={nickname} lobby={lobby} onBack={goToHome} />;
         }
 
-        // 3. If game IS started, use the flow system (GAME_FLOWS)
         const mode = lobby.gameMode as keyof typeof GAME_FLOWS;
         const flow = GAME_FLOWS[mode];
         const currentViewType = flow[screenIndex - 1];
